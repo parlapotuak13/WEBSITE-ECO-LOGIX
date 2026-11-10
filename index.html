@@ -1,0 +1,2333 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Eco-LogiX — Platform Terpadu Kurir, Pengirim &amp; Vendor 3PL</title>
+  <meta name="description" content="Platform Green-Routing &amp; Collaborative Load-Sharing 2 Vendor (Eco Hemat &amp; Kilat Raya) terintegrasi untuk Kurir, Pengirim, dan Vendor 3PL.">
+  <meta name="theme-color" content="#153d32">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%BF%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Fraunces:wght@600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
+  <style>
+    :root {
+      --forest: #153d32;
+      --forest-h: #215946;
+      --deep: #102e28;
+      --cream: #f6f4ea;
+      --surface: #fffefa;
+      --soft: #e7f1d8;
+      --lime: #b8e071;
+      --muted: #5e7268;
+      --line: #dbe4d5;
+      --warn-bg: #fef3c7;
+      --warn-ink: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', 'DM Sans', system-ui, -apple-system, sans-serif;
+      color: var(--deep);
+      background: var(--cream);
+      padding-bottom: 96px;
+    }
+    .brand { font-family: 'Fraunces', Georgia, serif; letter-spacing: -0.02em; }
+    .eyebrow { letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.72rem; font-weight: 700; color: #3b7654; }
+    .surface-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 6px 24px rgba(16, 46, 40, 0.04);
+    }
+    .soft-card {
+      background: var(--soft);
+      border: 1px solid #cde0b8;
+      border-radius: 18px;
+    }
+    [hidden] { display: none !important; }
+    .role-btn {
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      color: #d8e9d7;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .role-btn:hover { background: rgba(255, 255, 255, 0.1); }
+    .role-btn.active {
+      background: var(--lime);
+      color: var(--forest);
+      border-color: var(--lime);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+    .pill-btn {
+      border: 1px solid #c7d7c2;
+      border-radius: 999px;
+      padding: 8px 15px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      background: #fffefa;
+      color: var(--deep);
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .pill-btn.active {
+      background: var(--forest);
+      color: #ffffff;
+      border-color: var(--forest);
+    }
+    .btn-primary {
+      background: var(--forest);
+      color: #ffffff;
+      border-radius: 13px;
+      padding: 11px 18px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      border: none;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--forest-h); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary {
+      background: var(--soft);
+      color: var(--forest);
+      border: 1px solid #c5dbb0;
+      border-radius: 13px;
+      padding: 11px 18px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-secondary:hover:not(:disabled) { background: #dcebc7; }
+    .field-input {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #ffffff;
+      font-size: 0.92rem;
+    }
+    .field-input:focus { outline: 2px solid #5a9e74; border-color: #397f5a; }
+    .map-frame { height: 280px; border-radius: 16px; overflow: hidden; background: #e3ecdc; position: relative; z-index: 1; }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 900;
+      background: rgba(255, 254, 250, 0.96);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--line);
+      padding: 7px 10px calc(7px + env(safe-area-inset-bottom, 0px));
+      box-shadow: 0 -4px 20px rgba(16, 46, 40, 0.06);
+    }
+    .sub-tab-btn {
+      border-radius: 12px;
+      padding: 7px 4px;
+      font-size: 0.73rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      border: none;
+      background: transparent;
+    }
+    .sub-tab-btn.active {
+      background: var(--soft);
+      color: var(--forest);
+    }
+    .step-item {
+      position: relative;
+      padding: 0 0 18px 32px;
+      border-left: 2px solid #d5e0d1;
+      margin-left: 10px;
+    }
+    .step-item:last-child { border-left-color: transparent; padding-bottom: 0; }
+    .step-item::before {
+      content: '';
+      position: absolute;
+      left: -8px;
+      top: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #d5e0d1;
+      border: 3px solid #fffefa;
+    }
+    .step-item.done { border-left-color: #2f855a; }
+    .step-item.done::before { background: #2f855a; }
+    .step-item.current::before { background: #84cc16; box-shadow: 0 0 0 4px #e2f2cb; }
+    .route-option.winner { border-color: #4d9a6c; background: #eef7e3; }
+    .qr-grid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 3px;
+      width: 136px;
+      height: 136px;
+      padding: 9px;
+      background: #ffffff;
+      border: 1px solid #d5e1d1;
+      border-radius: 12px;
+    }
+    .qr-cell { border-radius: 2px; background: #f3f6ed; }
+    .qr-cell.dark { background: #153d32; }
+    input[type=range] { accent-color: #286a46; width: 100%; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Role Switcher & Connection Banner -->
+  <header class="bg-[#153d32] text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-5xl mx-auto px-4 py-3">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#b8e071] text-[#153d32] font-bold grid place-items-center text-xl shrink-0">🌿</div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="brand text-xl sm:text-2xl font-bold leading-none">Eco-LogiX</h1>
+              <span id="global-collab-badge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#b8e071] text-[#153d32]">Load-Sharing Aktif</span>
+            </div>
+            <p class="text-xs text-[#cbe0ce] mt-0.5">Sistem Rekomendasi Rute &amp; Kolaborasi 2 Vendor (Eco Hemat × Kilat Raya)</p>
+          </div>
+        </div>
+
+        <!-- Role Switcher (Kurir / Pengirim / Vendor 3PL) -->
+        <div class="flex items-center gap-1.5 bg-[#0f2e25] p-1 rounded-full" role="tablist" aria-label="Pilih Antarmuka">
+          <button type="button" id="role-btn-kurir" class="role-btn active" data-role="kurir">🛵 Kurir</button>
+          <button type="button" id="role-btn-pengirim" class="role-btn" data-role="pengirim">📦 Pengirim</button>
+          <button type="button" id="role-btn-vendor" class="role-btn" data-role="vendor">🏢 Vendor 3PL</button>
+        </div>
+      </div>
+
+      <!-- Status & Quick Actions Bar -->
+      <div class="mt-2.5 pt-2 border-t border-white/15 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2">
+          <span id="conn-dot" class="w-2 h-2 rounded-full bg-[#b8e071]"></span>
+          <span id="conn-status" class="text-[#d8e9d7] font-medium">Mode Sinkronisasi Terpadu (Lokal &amp; Siap Supabase)</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-1.5 bg-black/25 px-2.5 py-1 rounded-full border border-white/15">
+            <span class="text-[#b8e071] font-bold">👤 Akun:</span>
+            <span id="active-user-label" class="text-white font-bold">Budi Santoso (Kurir A · Eco Hemat)</span>
+            <span id="rbac-lock-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-[#b8e071]/20 text-[#b8e071] font-bold">RBAC Aktif</span>
+          </div>
+          <button type="button" id="btn-open-auth" class="px-2.5 py-1 rounded-full bg-[#b8e071] text-[#153d32] hover:bg-[#c8eb88] font-bold transition cursor-pointer">🔐 Ganti Akun / Login</button>
+          <button type="button" id="btn-open-config" class="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold transition">⚙️ Konfigurasi DB</button>
+          <button type="button" id="btn-share-session" class="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold transition">🔗 Bagikan Sesi</button>
+          <button type="button" id="btn-global-reset" class="px-2.5 py-1 rounded-full bg-red-500/20 hover:bg-red-500/30 text-red-100 font-semibold transition">↺ Reset Semua</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast Notification -->
+  <div id="toast-box" class="fixed top-28 right-4 z-[1100] max-w-sm bg-[#153d32] text-white px-4 py-3 rounded-xl shadow-lg border border-[#b8e071]/40 text-sm font-medium" hidden role="status" aria-live="polite"></div>
+
+  <!-- Modal Config / Confirmation -->
+  <div id="app-modal" class="fixed inset-0 z-[1050] bg-black/50 backdrop-blur-xs flex items-center justify-center p-4" hidden>
+    <div class="surface-card max-w-md w-full p-6">
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <h3 id="modal-title" class="brand text-xl font-bold text-[#153d32]">Konfigurasi Database Supabase</h3>
+        <button type="button" id="modal-close" class="text-sm font-bold px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200">✕</button>
+      </div>
+      <div id="modal-body-config">
+        <p class="text-xs text-[#5e7268] mb-4">Masukkan Project URL dan Anon/Publishable Key dari Supabase untuk menyinkronkan data Kurir, Pengirim, dan Vendor 3PL secara cloud. Jika dikosongkan, aplikasi berjalan di Mode Lokal Terpadu.</p>
+        <div class="space-y-3">
+          <div>
+            <label for="cfg-url" class="block text-xs font-bold mb-1">SUPABASE_URL</label>
+            <input id="cfg-url" type="url" class="field-input" placeholder="https://xyzcompany.supabase.co">
+          </div>
+          <div>
+            <label for="cfg-key" class="block text-xs font-bold mb-1">SUPABASE_ANON_KEY</label>
+            <input id="cfg-key" type="text" class="field-input" placeholder="eyJhbGciOi... atau sb_publishable_...">
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-5">
+          <button type="button" id="cfg-clear-btn" class="btn-secondary text-xs">Mode Lokal Saja</button>
+          <button type="button" id="cfg-save-btn" class="btn-primary text-xs">Simpan &amp; Hubungkan</button>
+        </div>
+      </div>
+      <div id="modal-body-confirm" hidden>
+        <p id="confirm-text" class="text-sm text-[#102e28] mb-5">Apakah Anda yakin ingin mereset seluruh simulasi dan data pengiriman kembali ke kondisi awal?</p>
+        <div class="flex justify-end gap-2">
+          <button type="button" id="confirm-cancel-btn" class="btn-secondary text-xs">Batal</button>
+          <button type="button" id="confirm-ok-btn" class="btn-primary text-xs bg-red-700 hover:bg-red-800">Ya, Reset Semua</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Portal Login & Manajemen Akun Per Role (RBAC) -->
+  <div id="auth-modal" class="fixed inset-0 z-[1060] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto" hidden>
+    <div class="surface-card max-w-lg w-full p-6 my-8">
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <div>
+          <p class="eyebrow">SISTEM AUTENTIKASI MULTI-ROLE (RBAC)</p>
+          <h3 class="brand text-xl sm:text-2xl font-bold text-[#153d32]">Masuk / Pilih Akun Eco-LogiX</h3>
+        </div>
+        <button type="button" id="auth-modal-close" class="text-sm font-bold px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer">✕</button>
+      </div>
+      <p class="text-xs text-[#5e7268] mb-4">Setiap peran (<strong>Pengirim</strong>, <strong>Kurir Vendor A/B</strong>, dan <strong>Admin Vendor 3PL</strong>) memiliki akun dan hak akses masing-masing.</p>
+
+      <!-- Quick Demo Accounts (1-Click Login) -->
+      <div class="mb-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-[#3b7654]">⚡ Masuk Cepat Akun Demo (1-Klik)</span>
+          <label class="inline-flex items-center gap-1.5 text-xs text-[#5e7268] cursor-pointer">
+            <input type="checkbox" id="rbac-strict-toggle" checked class="accent-[#153d32]">
+            <span>Kunci tampilan sesuai Role Akun</span>
+          </label>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-2.5">
+          <button type="button" data-demo-acc="kurir_a" class="text-left p-3 rounded-xl border border-[#c7d7c2] hover:border-[#153d32] hover:bg-[#e7f1d8]/50 transition cursor-pointer">
+            <div class="flex items-center justify-between">
+              <strong class="text-xs font-bold text-[#153d32]">🛵 Kurir A · Eco Hemat</strong>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#e7f1d8] text-[#153d32]">Role: Kurir</span>
+            </div>
+            <p class="text-xs font-semibold mt-1">Budi Santoso</p>
+            <p class="text-[11px] text-[#5e7268]">kurir.a@ecohemat.id · Pass: demo1234</p>
+          </button>
+
+          <button type="button" data-demo-acc="kurir_b" class="text-left p-3 rounded-xl border border-[#c7d7c2] hover:border-[#153d32] hover:bg-[#e7f1d8]/50 transition cursor-pointer">
+            <div class="flex items-center justify-between">
+              <strong class="text-xs font-bold text-[#153d32]">🛵 Kurir B · Kilat Raya</strong>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">Role: Kurir</span>
+            </div>
+            <p class="text-xs font-semibold mt-1">Andi Pratama</p>
+            <p class="text-[11px] text-[#5e7268]">kurir.b@kilatraya.id · Pass: demo1234</p>
+          </button>
+
+          <button type="button" data-demo-acc="pengirim" class="text-left p-3 rounded-xl border border-[#c7d7c2] hover:border-[#153d32] hover:bg-[#e7f1d8]/50 transition cursor-pointer">
+            <div class="flex items-center justify-between">
+              <strong class="text-xs font-bold text-[#153d32]">📦 Pelanggan / Pengirim</strong>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900">Role: Pengirim</span>
+            </div>
+            <p class="text-xs font-semibold mt-1">UMKM Kopi Malang</p>
+            <p class="text-[11px] text-[#5e7268]">pengirim@umkm-malang.id · Pass: demo1234</p>
+          </button>
+
+          <button type="button" data-demo-acc="vendor" class="text-left p-3 rounded-xl border border-[#c7d7c2] hover:border-[#153d32] hover:bg-[#e7f1d8]/50 transition cursor-pointer">
+            <div class="flex items-center justify-between">
+              <strong class="text-xs font-bold text-[#153d32]">🏢 Admin Vendor 3PL</strong>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-900">Role: Vendor</span>
+            </div>
+            <p class="text-xs font-semibold mt-1">Rina Wijaya (Manajer Ops)</p>
+            <p class="text-[11px] text-[#5e7268]">admin@ecohemat-3pl.id · Pass: demo1234</p>
+          </button>
+        </div>
+      </div>
+
+      <!-- Manual Login / Register Form -->
+      <div class="border-t border-[#dbe4d5] pt-4">
+        <div class="flex gap-2 mb-3">
+          <button type="button" id="auth-tab-login" class="pill-btn active text-xs py-1.5 px-3">Masuk dengan Email</button>
+          <button type="button" id="auth-tab-register" class="pill-btn text-xs py-1.5 px-3">Daftar Akun Role Baru</button>
+        </div>
+
+        <form id="auth-form" class="space-y-3">
+          <div id="auth-register-fields" class="grid sm:grid-cols-2 gap-3" hidden>
+            <div>
+              <label for="auth-name" class="block text-xs font-bold mb-1">Nama Lengkap / Instansi</label>
+              <input id="auth-name" type="text" class="field-input" placeholder="Contoh: Toko Sari Apel">
+            </div>
+            <div>
+              <label for="auth-role-select" class="block text-xs font-bold mb-1">Pilih Role Akun</label>
+              <select id="auth-role-select" class="field-input">
+                <option value="pengirim">📦 Pengirim (Pelanggan / UMKM)</option>
+                <option value="kurir_a">🛵 Kurir Vendor A (Eco Hemat)</option>
+                <option value="kurir_b">🛵 Kurir Vendor B (Kilat Raya)</option>
+                <option value="vendor">🏢 Admin Vendor 3PL</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label for="auth-email" class="block text-xs font-bold mb-1">Email Akun</label>
+              <input id="auth-email" type="email" required class="field-input" placeholder="nama@email.com" value="pengirim@umkm-malang.id">
+            </div>
+            <div>
+              <label for="auth-pass" class="block text-xs font-bold mb-1">Password</label>
+              <input id="auth-pass" type="password" required minlength="4" class="field-input" placeholder="••••••" value="demo1234">
+            </div>
+          </div>
+
+          <p id="auth-msg" class="text-xs font-bold min-h-4" role="status"></p>
+
+          <div class="flex justify-end gap-2 pt-1">
+            <button type="submit" id="auth-submit-btn" class="btn-primary text-xs">Masuk ke Akun</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="max-w-5xl mx-auto px-4 py-5">
+
+    <!-- Live Sync Overview Banner across the 3 roles -->
+    <div class="soft-card px-4 py-3 mb-5 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <span><strong>📦 Pengirim:</strong> <span id="sync-bar-ships">1 pengiriman aktif</span></span>
+        <span>•</span>
+        <span><strong>🏢 Vendor 3PL:</strong> <span id="sync-bar-vendor">Kolaborasi Disetujui (δ ≥ 0,75)</span></span>
+        <span>•</span>
+        <span><strong>🛵 Kurir:</strong> <span id="sync-bar-kurir">Rute via Hub Merjosari (0%)</span></span>
+      </div>
+      <span class="text-xs font-bold text-[#287044]" id="sync-bar-otp">OTP Aktif: ----</span>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- ROLE 1: ANTARMUKA KURIR (COURIER INTERFACE)                         -->
+    <!-- =================================================================== -->
+    <div id="view-kurir" class="role-view">
+
+      <!-- Kurir Sub-panel 1: Dashboard -->
+      <section id="k-panel-dashboard" class="k-panel">
+        <div class="mb-4">
+          <p class="eyebrow">OPERASI KURIR · KEC. LOWOKWARU, MALANG</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Dasbor Pengantaran &amp; Peta Kolaborasi</h2>
+          <p class="text-sm text-[#5e7268]">Penggabungan muatan 2 vendor (<strong>Eco Hemat</strong> &amp; <strong>Kilat Raya</strong>) melalui titik konsolidasi <strong>Hub Kel. Merjosari</strong>.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-[1.35fr_1fr] gap-4">
+          <div class="surface-card p-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h3 class="font-bold text-base">Peta Kolaborasi Rute 2 Vendor</h3>
+              <span id="k-map-badge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#e7f1d8] text-[#153d32]">Rute Optimal: Via Hub Merjosari</span>
+            </div>
+            <div id="k-dash-map" class="map-frame" role="img" aria-label="Peta rute pengiriman di Lowokwaru"></div>
+            <div class="flex flex-wrap gap-4 mt-3 text-xs sm:text-sm">
+              <label class="inline-flex items-center gap-2 cursor-pointer">
+                <input id="k-toggle-separate" type="checkbox" checked class="w-4 h-4 accent-gray-600">
+                <span>Rute terpisah 2 vendor (abu-abu · 36 km)</span>
+              </label>
+              <label class="inline-flex items-center gap-2 cursor-pointer">
+                <input id="k-toggle-shared" type="checkbox" checked class="w-4 h-4 accent-green-700">
+                <span>Rute gabungan via Hub (hijau · 26 km)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="surface-card p-4 flex flex-col justify-between">
+              <p class="text-xs font-semibold text-[#5e7268]">Jarak Tempuh Gabungan (VMT)</p>
+              <div>
+                <div id="k-vmt-value" class="brand text-2xl sm:text-3xl font-bold text-[#153d32] mt-2">36 → 26 km</div>
+                <p id="k-vmt-sub" class="text-xs text-[#2f7651] font-semibold mt-1">Hemat 10 km (27,8%)</p>
+              </div>
+            </div>
+            <div class="surface-card p-4 flex flex-col justify-between">
+              <p class="text-xs font-semibold text-[#5e7268]">Emisi CO₂ Dihemat</p>
+              <div>
+                <div id="k-carbon-value" class="brand text-2xl sm:text-3xl font-bold text-[#153d32] mt-2">0,70 kg</div>
+                <p id="k-carbon-sub" class="text-xs text-[#2f7651] font-semibold mt-1">Turun dari 2,52 → 1,82 kg</p>
+              </div>
+            </div>
+            <div class="surface-card p-4 col-span-2">
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-semibold text-[#5e7268]">Keterisian Kendaraan Kurir A (Load Factor)</p>
+                <span id="k-fill-tag" class="text-xs font-bold text-[#2f7651]">24 / 30 paket</span>
+              </div>
+              <div id="k-fill-value" class="brand text-2xl sm:text-3xl font-bold text-[#153d32] mt-1">40% → 80%</div>
+              <div class="h-2.5 bg-[#e6eee0] rounded-full mt-3 overflow-hidden">
+                <div id="k-fill-bar" class="h-full bg-[#2f7651] rounded-full transition-all duration-500" style="width: 80%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="surface-card p-4 sm:p-5 mt-4 overflow-x-auto">
+          <h3 class="font-bold text-base mb-3">Perbandingan Efisiensi Sebelum vs Sesudah Penggabungan 2 Vendor</h3>
+          <table class="w-full text-sm text-left border-collapse">
+            <thead>
+              <tr class="border-b border-[#dbe4d5] text-[#5e7268]">
+                <th class="py-2.5 px-2 font-semibold">Indikator Operasional</th>
+                <th class="py-2.5 px-2 font-semibold">Sebelum (2 Vendor Jalan Sendiri)</th>
+                <th class="py-2.5 px-2 font-semibold text-[#287044]">Sesudah (Load-Sharing via Hub)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#edf2e8]">
+              <tr>
+                <td class="py-2.5 px-2 font-medium">Total Jarak Kendaraan (VMT)</td>
+                <td class="py-2.5 px-2">36 km (18 km + 18 km)</td>
+                <td class="py-2.5 px-2 font-bold text-[#287044]" id="k-tbl-vmt">26 km (20 km + 6 km ke Hub)</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-2 font-medium">Total Emisi CO₂</td>
+                <td class="py-2.5 px-2">2,52 kg CO₂</td>
+                <td class="py-2.5 px-2 font-bold text-[#287044]" id="k-tbl-co2">1,82 kg CO₂ (Hemat 0,70 kg)</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-2 font-medium">Biaya Operasional per Paket</td>
+                <td class="py-2.5 px-2">Rp 3.750 / paket</td>
+                <td class="py-2.5 px-2 font-bold text-[#287044]" id="k-tbl-cost">Rp 2.858 / paket (Hemat 23,8%)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Kurir Sub-panel 2: Tugas & Mesin Pencocokan 2 Vendor -->
+      <section id="k-panel-tasks" class="k-panel" hidden>
+        <div class="mb-4">
+          <p class="eyebrow">KOORDINASI MUATAN 2 VENDOR</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Tugas Kurir &amp; Mesin Pencocokan Rute</h2>
+          <p class="text-sm text-[#5e7268]">Pilih sudut pandang kurir dan lihat bagaimana algoritma mencocokkan rute antara <strong>Eco Hemat</strong> dan <strong>Kilat Raya</strong>.</p>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-4" role="group" aria-label="Pilih kurir">
+          <button type="button" id="k-courier-a" class="pill-btn active">Kurir A · Eco Hemat (Penerima Muatan)</button>
+          <button type="button" id="k-courier-b" class="pill-btn">Kurir B · Kilat Raya (Penyerah Muatan)</button>
+        </div>
+
+        <div class="surface-card p-5 mb-4">
+          <div class="flex flex-wrap justify-between items-start gap-3">
+            <div>
+              <p class="eyebrow">TUGAS AKTIF KURIR</p>
+              <h3 id="k-courier-name" class="brand text-2xl font-bold mt-1">Kurir A · Eco Hemat</h3>
+              <p id="k-courier-role" class="text-xs font-semibold text-[#2f7651] mt-0.5">Armada Utama Pengantaran Akhir (Last-Mile)</p>
+            </div>
+            <span id="k-courier-pkg-badge" class="bg-[#e7f1d8] text-[#153d32] rounded-full px-3.5 py-1 text-sm font-bold">12 + 12 paket</span>
+          </div>
+          <p id="k-courier-detail" class="text-sm text-[#5e7268] mt-3"></p>
+        </div>
+
+        <div class="surface-card p-5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h3 class="font-bold text-base">Mesin Pencocokan Rute (Spatial Overlap &amp; Capacity Engine)</h3>
+            <span id="k-vendor-policy-pill" class="text-xs font-bold px-3 py-1 rounded-full bg-[#e7f1d8] text-[#153d32]">Status Vendor 3PL: Disetujui</span>
+          </div>
+          <p class="text-xs sm:text-sm text-[#5e7268] mt-1">Mengukur jarak Haversine ke Hub Merjosari, indeks kemiripan arah ($\delta$), sisa kapasitas ($V_{	ext{rem}}$), serta persetujuan dari antarmuka Vendor 3PL.</p>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 text-center">
+            <div class="bg-[#f3f6ec] rounded-xl p-3">
+              <div class="text-xs text-[#5e7268]">Jarak ke Hub</div>
+              <strong id="k-match-distance" class="block mt-1 text-lg font-bold text-[#153d32]">1,71 km</strong>
+            </div>
+            <div class="bg-[#f3f6ec] rounded-xl p-3">
+              <div class="text-xs text-[#5e7268]">Indeks Kemiripan δ</div>
+              <strong id="k-match-delta" class="block mt-1 text-lg font-bold text-[#153d32]">0,82</strong>
+            </div>
+            <div class="bg-[#f3f6ec] rounded-xl p-3">
+              <div class="text-xs text-[#5e7268]">Ambang Vendor δ</div>
+              <strong id="k-match-threshold" class="block mt-1 text-lg font-bold text-[#153d32]">0,75</strong>
+            </div>
+            <div class="bg-[#f3f6ec] rounded-xl p-3">
+              <div class="text-xs text-[#5e7268]">Sisa Kapasitas (V_rem)</div>
+              <strong id="k-match-capacity" class="block mt-1 text-lg font-bold text-[#153d32]">18 paket</strong>
+            </div>
+          </div>
+
+          <p class="text-xs text-[#5e7268] mt-4">Rumus kemiripan spasial: $\delta = 1 - rac{1}{2} 	imes (	ext{jarak memutar via hub} \div 	ext{jarak via hub}) = 0,82$. Syarat Load-Sharing: $\delta \ge 	ext{Ambang Vendor}$, jarak memutar $2	ext{ km} \le 	ext{Batas Memutar}$, $V_{	ext{rem}} \ge 12	ext{ paket}$, dan disetujui Vendor 3PL.</p>
+
+          <div class="mt-3 pt-3 border-t border-[#dbe4d5] flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <span class="text-sm font-medium">Rekomendasi Sistem: </span>
+              <strong id="k-match-decision" class="text-sm sm:text-base font-bold text-[#287044]">Load-Sharing via Hub Merjosari</strong>
+            </div>
+            <button type="button" id="k-go-vendor-collab" class="text-xs font-bold text-[#153d32] underline cursor-pointer">Ubah kebijakan di Antarmuka Vendor 3PL →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Kurir Sub-panel 3: Simulasi Rute & Green-Routing -->
+      <section id="k-panel-route" class="k-panel" hidden>
+        <div class="mb-4">
+          <p class="eyebrow">SIMULASI PERJALANAN &amp; OPTIMASI RUTE</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Simulasi Pergerakan &amp; Kalkulator Green-Routing</h2>
+          <p class="text-sm text-[#5e7268]">Jalankan simulasi perjalanan kurir. Kemajuan rute otomatis memperbarui status lacak di antarmuka <strong>Pengirim</strong>.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-[1.25fr_1fr] gap-4">
+          <div class="surface-card p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span id="k-sim-route-label" class="text-xs font-bold text-[#153d32]">Rute Aktif: Kolaborasi via Hub Merjosari</span>
+              <span id="k-sim-pct" class="text-xs font-bold px-2 py-0.5 rounded bg-[#e7f1d8] text-[#153d32]">0%</span>
+            </div>
+            <div id="k-route-map" class="map-frame" role="img" aria-label="Peta simulasi kurir"></div>
+            <div class="flex items-center justify-between flex-wrap gap-3 mt-4">
+              <div class="flex items-center gap-2">
+                <button type="button" id="k-sim-btn" class="btn-primary">▶ Mulai Simulasi</button>
+                <button type="button" id="k-sim-step-btn" class="btn-secondary" title="Majukan 1 tahap (+20%)">+1 Tahap</button>
+              </div>
+              <div class="text-right">
+                <span class="text-xs text-[#5e7268] block">Emisi Berjalan</span>
+                <strong id="k-running-carbon" class="text-base font-bold text-[#153d32]">0,00 kg CO₂</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="surface-card p-5">
+            <h3 class="font-bold text-base mb-4">Tahap Perjalanan (Tersinkron ke Pengirim)</h3>
+            <ol id="k-step-list">
+              <li class="step-item current"><span class="font-semibold text-sm">1. Diterima</span><p class="text-xs text-[#5e7268] m-0">Order pengiriman masuk ke sistem</p></li>
+              <li class="step-item"><span class="font-semibold text-sm">2. Pengambilan</span><p class="text-xs text-[#5e7268] m-0">Kurir menjemput paket dari pengirim</p></li>
+              <li class="step-item"><span class="font-semibold text-sm">3. Transit Hub Merjosari</span><p class="text-xs text-[#5e7268] m-0">Konsolidasi paket Kilat Raya &amp; Eco Hemat</p></li>
+              <li class="step-item"><span class="font-semibold text-sm">4. Serah Terima Antar-Vendor</span><p class="text-xs text-[#5e7268] m-0">Verifikasi kode OTP di Micro-Hub</p></li>
+              <li class="step-item"><span class="font-semibold text-sm">5. Pengantaran Terpadu</span><p class="text-xs text-[#5e7268] m-0">Kurir A mengantar gabungan paket ke tujuan</p></li>
+              <li class="step-item"><span class="font-semibold text-sm">6. Selesai</span><p class="text-xs text-[#5e7268] m-0">Seluruh paket tiba tepat waktu</p></li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="surface-card p-5 mt-4">
+          <h3 class="font-bold text-base">Kalkulator Fungsi Objektif Green-Routing</h3>
+          <p class="text-xs sm:text-sm text-[#5e7268] mt-1">Sistem memilih rute dengan skor penalti terendah: <strong>$Z = lpha 	imes f_{	ext{fuel}} + eta 	imes N_{	ext{stop}}$</strong>. Geser bobot prioritas di bawah untuk menguji sensitivitas saran rute:</p>
+
+          <div class="grid sm:grid-cols-2 gap-5 mt-4">
+            <div>
+              <div class="flex justify-between text-xs font-bold mb-1">
+                <label for="k-alpha">Bobot Bahan Bakar &amp; Emisi (α)</label>
+                <output id="k-alpha-val" for="k-alpha">0,70</output>
+              </div>
+              <input id="k-alpha" type="range" min="0" max="100" value="70">
+            </div>
+            <div>
+              <div class="flex justify-between text-xs font-bold mb-1">
+                <label for="k-beta">Bobot Jumlah Pemberhentian (β)</label>
+                <output id="k-beta-val" for="k-beta">0,30</output>
+              </div>
+              <input id="k-beta" type="range" min="0" max="100" value="30">
+            </div>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-3 mt-4">
+            <div id="k-opt-direct" class="route-option border border-[#dbe4d5] rounded-xl p-4 transition">
+              <div class="flex justify-between items-center">
+                <strong class="text-sm">Opsi A: Rute Langsung (Tanpa Hub)</strong>
+                <span class="text-xs text-[#5e7268]">f_fuel = 8 · N_stop = 3</span>
+              </div>
+              <div id="k-direct-score" class="brand text-xl font-bold mt-2">Z = 6,50</div>
+            </div>
+            <div id="k-opt-hub" class="route-option winner border border-[#dbe4d5] rounded-xl p-4 transition">
+              <div class="flex justify-between items-center">
+                <strong class="text-sm">Opsi B: Rute Kolaborasi via Hub</strong>
+                <span class="text-xs text-[#5e7268]">f_fuel = 5 · N_stop = 5</span>
+              </div>
+              <div id="k-hub-score" class="brand text-xl font-bold mt-2">Z = 5,00</div>
+            </div>
+          </div>
+          <p id="k-best-route-text" class="text-xs sm:text-sm font-bold text-[#287044] mt-3"></p>
+        </div>
+      </section>
+
+      <!-- Kurir Sub-panel 4: Hub Merjosari -->
+      <section id="k-panel-hub" class="k-panel" hidden>
+        <div class="mb-4">
+          <p class="eyebrow">TITIK KONSOLIDASI MICRO-HUB</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Hub Kel. Merjosari</h2>
+          <p class="text-sm text-[#5e7268]">Daftar paket yang dikonsolidasikan dari <strong>Kilat Raya</strong> dan <strong>Pengirim</strong> ke armada <strong>Eco Hemat</strong>.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-3 gap-3 mb-4">
+          <div class="surface-card p-4">
+            <p class="text-xs text-[#5e7268]">Paket di Hub Saat Ini</p>
+            <strong id="k-hub-count" class="brand text-2xl font-bold mt-1 block">0 / 12</strong>
+          </div>
+          <div class="surface-card p-4">
+            <p class="text-xs text-[#5e7268]">Kiriman Baru dari Pengirim</p>
+            <strong id="k-hub-user-ships" class="brand text-2xl font-bold mt-1 block">1 kiriman</strong>
+          </div>
+          <div class="surface-card p-4">
+            <p class="text-xs text-[#5e7268]">Status Serah Terima OTP</p>
+            <strong id="k-hub-verify-status" class="brand text-xl font-bold mt-1 block text-[#92400e]">Menunggu Verifikasi</strong>
+          </div>
+        </div>
+
+        <div class="surface-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-base">Daftar Paket Konsolidasi</h3>
+            <button type="button" id="k-hub-to-verify" class="text-xs font-bold text-[#153d32] underline cursor-pointer">Buka Verifikasi OTP →</button>
+          </div>
+          <div id="k-package-list" class="divide-y divide-[#edf2e8]"></div>
+        </div>
+      </section>
+
+      <!-- Kurir Sub-panel 5: Verifikasi OTP -->
+      <section id="k-panel-verify" class="k-panel" hidden>
+        <div class="mb-4">
+          <p class="eyebrow">BUKTI SERAH TERIMA ANTAR-VENDOR</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Verifikasi Paket &amp; OTP</h2>
+          <p class="text-sm text-[#5e7268]">Kode OTP ini tersinkronisasi otomatis dengan kode pengiriman aktif pada antarmuka <strong>Pengirim</strong>.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="surface-card p-5 flex flex-col items-center justify-center text-center">
+            <h3 class="font-bold text-base">Kode QR Manifest Hub</h3>
+            <p class="text-xs text-[#5e7268] mt-1 mb-4">Pindai pada saat serah terima muatan antara Kurir B (Kilat Raya) dan Kurir A (Eco Hemat).</p>
+            <div id="k-qr-art" class="qr-grid" aria-label="Ilustrasi kode QR"></div>
+            <p id="k-qr-caption" class="text-xs font-bold text-[#5e7268] mt-3">ECO-HUB · MERJOSARI · 12 PAKET</p>
+          </div>
+
+          <div class="surface-card p-5">
+            <h3 class="font-bold text-base">Konfirmasi Kode OTP</h3>
+            <p class="text-xs text-[#5e7268] mt-1">Kode OTP aktif (sama dengan yang tampil di Lacak Pengirim):</p>
+            <div class="my-3 p-3 bg-[#e7f1d8] rounded-xl flex items-center justify-between">
+              <span id="k-demo-otp" class="brand tracking-[0.28em] text-2xl sm:text-3xl font-bold text-[#153d32]">----</span>
+              <button type="button" id="k-fill-otp-btn" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#153d32] text-white cursor-pointer">Isi Otomatis</button>
+            </div>
+            <form id="k-otp-form" class="space-y-3">
+              <div>
+                <label for="k-otp-input" class="block text-xs font-bold mb-1">Masukkan OTP 4 Digit</label>
+                <input id="k-otp-input" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required class="field-input text-center text-xl tracking-[0.3em] font-bold" placeholder="••••">
+              </div>
+              <button id="k-verify-btn" type="submit" class="btn-primary w-full">Verifikasi Serah Terima</button>
+            </form>
+            <p id="k-otp-msg" class="text-xs font-bold mt-3 min-h-5" role="status"></p>
+          </div>
+        </div>
+
+        <div class="surface-card p-5 mt-4">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-bold text-base">Log Serah Terima (Tersinkron ke Vendor 3PL)</h3>
+            <strong id="k-verified-count" class="text-sm font-bold text-[#287044]">0 / 12 paket</strong>
+          </div>
+          <div id="k-log-list" class="text-xs sm:text-sm text-[#5e7268] space-y-1"></div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- ROLE 2: ANTARMUKA PENGIRIM (SENDER INTERFACE)                       -->
+    <!-- =================================================================== -->
+    <div id="view-pengirim" class="role-view" hidden>
+
+      <!-- Pengirim Sub-panel 1: Buat Pengiriman -->
+      <section id="p-panel-create" class="p-panel">
+        <div class="mb-4">
+          <p class="eyebrow">ANTARMUKA PENGIRIM · KIRIM LEBIH BIJAK</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Buat Pengiriman Baru</h2>
+          <p class="text-sm text-[#5e7268]">Pilih <strong>Pengiriman Hijau</strong> agar paket Anda dikonsolidasikan via Hub Merjosari bersama armada kolaborasi 2 vendor.</p>
+        </div>
+
+        <form id="p-form" class="space-y-4">
+          <div class="surface-card p-5 space-y-4">
+            <div class="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label for="p-sender" class="block text-xs font-bold mb-1 text-[#5e7268]">Nama Pengirim</label>
+                <input id="p-sender" class="field-input" required maxlength="80" placeholder="Contoh: Toko Kopi Kawi" value="UMKM Kopi Malang">
+              </div>
+              <div>
+                <label for="p-city" class="block text-xs font-bold mb-1 text-[#5e7268]">Kota</label>
+                <input id="p-city" class="field-input" value="Kota Malang" required maxlength="60">
+              </div>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label for="p-pd" class="block text-xs font-bold mb-1 text-[#5e7268]">Kecamatan Jemput</label>
+                <select id="p-pd" class="field-input">
+                  <option value="Lowokwaru" selected>Lowokwaru</option>
+                  <option value="Blimbing">Blimbing</option>
+                  <option value="Klojen">Klojen</option>
+                  <option value="Sukun">Sukun</option>
+                  <option value="Kedungkandang">Kedungkandang</option>
+                </select>
+              </div>
+              <div>
+                <label for="p-dd" class="block text-xs font-bold mb-1 text-[#5e7268]">Kecamatan Tujuan</label>
+                <select id="p-dd" class="field-input">
+                  <option value="Lowokwaru" selected>Lowokwaru</option>
+                  <option value="Blimbing">Blimbing</option>
+                  <option value="Klojen">Klojen</option>
+                  <option value="Sukun">Sukun</option>
+                  <option value="Kedungkandang">Kedungkandang</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label for="p-pa" class="block text-xs font-bold mb-1 text-[#5e7268]">Alamat Lengkap Jemput</label>
+                <textarea id="p-pa" class="field-input" rows="2" required maxlength="200" placeholder="Jl. Soekarno Hatta No. 12, Lowokwaru">Jl. MT Haryono No. 45, Dinoyo</textarea>
+              </div>
+              <div>
+                <label for="p-da" class="block text-xs font-bold mb-1 text-[#5e7268]">Alamat Lengkap Tujuan</label>
+                <textarea id="p-da" class="field-input" rows="2" required maxlength="200" placeholder="Jl. Veteran No. 8, Lowokwaru">Jl. Gajayana No. 18, Ketawanggede</textarea>
+              </div>
+            </div>
+
+            <div class="grid sm:grid-cols-3 gap-3">
+              <div>
+                <label for="p-pt" class="block text-xs font-bold mb-1 text-[#5e7268]">Jenis Paket</label>
+                <select id="p-pt" class="field-input">
+                  <option>Paket kecil</option>
+                  <option>Dokumen</option>
+                  <option>Paket sedang</option>
+                </select>
+              </div>
+              <div>
+                <label for="p-qty" class="block text-xs font-bold mb-1 text-[#5e7268]">Jumlah Paket</label>
+                <input id="p-qty" type="number" min="1" max="30" value="2" required class="field-input">
+              </div>
+              <div>
+                <label for="p-notes" class="block text-xs font-bold mb-1 text-[#5e7268]">Catatan Kurir (Opsional)</label>
+                <input id="p-notes" class="field-input" maxlength="150" placeholder="Jangan dibanting">
+              </div>
+            </div>
+          </div>
+
+          <fieldset class="surface-card p-5">
+            <legend class="font-bold text-sm mb-3 px-1">Pilih Mode Pengiriman</legend>
+            <div class="grid sm:grid-cols-2 gap-3">
+              <label class="border-2 border-[#2f7651] bg-[#e7f1d8]/50 rounded-xl p-3.5 cursor-pointer flex items-start gap-3">
+                <input type="radio" name="p-mode" value="hijau" checked class="mt-1 accent-[#153d32]">
+                <div>
+                  <strong class="block text-sm">🌿 Pengiriman Hijau (Load-Sharing 2 Vendor)</strong>
+                  <span class="text-xs text-[#5e7268] block mt-0.5">Digabung via Micro-Hub Merjosari (Kilat Raya × Eco Hemat). Hemat ±23,8% biaya &amp; ±0,06 kg CO₂/paket.</span>
+                </div>
+              </label>
+              <label class="border border-[#dbe4d5] bg-white rounded-xl p-3.5 cursor-pointer flex items-start gap-3">
+                <input type="radio" name="p-mode" value="langsung" class="mt-1 accent-[#153d32]">
+                <div>
+                  <strong class="block text-sm">⚡ Rute Langsung (1 Vendor Tanpa Hub)</strong>
+                  <span class="text-xs text-[#5e7268] block mt-0.5">Diantar langsung oleh 1 kurir tanpa konsolidasi di micro-hub. Tarif &amp; emisi standar.</span>
+                </div>
+              </label>
+            </div>
+          </fieldset>
+
+          <div id="p-form-err" class="bg-red-100 text-red-800 px-4 py-2.5 rounded-xl text-xs font-bold" hidden></div>
+
+          <button id="p-submit" type="submit" class="btn-primary w-full py-3 text-base">Buat Pengiriman &amp; Kirim ke Kurir</button>
+        </form>
+      </section>
+
+      <!-- Pengirim Sub-panel 2: Lacak Perjalanan -->
+      <section id="p-panel-track" class="p-panel" hidden>
+        <div class="mb-4">
+          <p class="eyebrow">PELACAKAN REAL-TIME</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Lacak Perjalanan Paket</h2>
+          <p class="text-sm text-[#5e7268]">Status di bawah otomatis bergerak saat Kurir menjalankan simulasi atau memverifikasi OTP.</p>
+        </div>
+
+        <div id="p-track-empty" class="surface-card p-6 text-center text-sm text-[#5e7268]" hidden>
+          Belum ada pengiriman dipilih. Silakan buat pengiriman baru terlebih dahulu.
+        </div>
+
+        <div id="p-track-content">
+          <div class="surface-card p-5 mb-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p class="eyebrow">NOMOR RESI PENGIRIMAN</p>
+                <strong id="p-t-id" class="brand text-2xl font-bold">ELX-001</strong>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="p-t-mode-badge" class="text-xs font-bold px-3 py-1 rounded-full bg-[#e7f1d8] text-[#153d32]">Pengiriman Hijau</span>
+                <span id="p-t-status" class="text-xs font-bold px-3 py-1 rounded-full bg-[#153d32] text-white">Diterima</span>
+              </div>
+            </div>
+            <p id="p-t-route" class="text-xs sm:text-sm text-[#5e7268] mt-2"></p>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="surface-card p-5">
+              <h3 class="font-bold text-base mb-4">Tahap Pengiriman</h3>
+              <ol id="p-steps"></ol>
+              <div class="flex flex-wrap gap-2 mt-3">
+                <button id="p-advance-btn" type="button" class="btn-primary flex-1">Majukan Status (+1 Tahap)</button>
+                <button id="p-jump-kurir-btn" type="button" class="btn-secondary text-xs">Buka Peta Kurir →</button>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="soft-card p-5">
+                <p class="eyebrow">CERITA DI BALIK RUTE</p>
+                <p id="p-story-text" class="text-sm leading-relaxed mt-2 font-medium"></p>
+                <p id="p-story-sub" class="text-xs text-[#5e7268] mt-2"></p>
+              </div>
+
+              <div id="p-handoff-card" class="surface-card p-5">
+                <div class="flex items-center justify-between">
+                  <h3 class="font-bold text-base">Kode OTP Serah Terima</h3>
+                  <span id="p-otp-verified-pill" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">Belum Diverifikasi</span>
+                </div>
+                <p class="text-xs text-[#5e7268] mt-1">Gunakan kode ini pada tab <strong>Verifikasi Kurir</strong> saat serah terima di Hub Merjosari / tujuan:</p>
+                <div id="p-otp-display" class="brand mt-3 text-3xl font-bold tracking-[0.25em] p-3 rounded-xl bg-[#f3f6ec] text-center text-[#153d32]">----</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Route SVG (switches accurately between Hijau via Hub vs Direct Route!) -->
+          <div class="surface-card p-5 mt-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <h3 id="p-svg-title" class="font-bold text-base">Skema Rute Gabungan · Kota Malang</h3>
+              <span class="text-xs text-[#5e7268]">Visualisasi Skematis</span>
+            </div>
+            <svg viewBox="0 0 360 175" role="img" aria-label="Skema rute pengiriman" class="w-full rounded-xl bg-[#e9f1e1] border border-[#d5e2c8]">
+              <!-- Direct grey dashed line -->
+              <polyline id="p-svg-direct-line" points="50,135 180,95 310,50" fill="none" stroke="#8b968f" stroke-width="3.5" stroke-dasharray="6 6"/>
+              <!-- Hub green solid line -->
+              <polyline id="p-svg-hub-line" points="50,135 115,95 175,45 245,65 310,50" fill="none" stroke="#247c48" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+              <circle cx="50" cy="135" r="8" fill="#276946" stroke="#fff" stroke-width="2.5"/>
+              <circle id="p-svg-hub-node" cx="175" cy="45" r="9" fill="#d97706" stroke="#fff" stroke-width="2.5"/>
+              <circle cx="310" cy="50" r="8" fill="#153d32" stroke="#fff" stroke-width="2.5"/>
+              <g font-size="11" font-weight="700" fill="#153d32">
+                <text x="24" y="158">Titik Jemput (Kurir B)</text>
+                <text id="p-svg-hub-label" x="122" y="26">Hub Kel. Merjosari (Serah Terima)</text>
+                <text x="235" y="78">Tujuan Akhir (Kurir A)</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pengirim Sub-panel 3: Riwayat Pengiriman -->
+      <section id="p-panel-history" class="p-panel" hidden>
+        <div class="mb-4">
+          <p class="eyebrow">ARSIP PENGIRIMAN</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Riwayat Pengiriman Anda</h2>
+          <p class="text-sm text-[#5e7268]">Klik pada salah satu pengiriman untuk menjadikannya pengiriman aktif yang dilacak oleh Kurir.</p>
+        </div>
+        <div id="p-h-empty" class="surface-card p-6 text-center text-sm text-[#5e7268]" hidden>Belum ada riwayat pengiriman.</div>
+        <div id="p-h-list" class="space-y-3"></div>
+      </section>
+
+      <!-- Pengirim Sub-panel 4: Dampak Lingkungan -->
+      <section id="p-panel-impact" class="p-panel" hidden>
+        <div class="mb-4">
+          <p class="eyebrow">KONTRIBUSI KEBERLANJUTAN</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Dampak Lingkungan Pengiriman Hijau</h2>
+          <p class="text-sm text-[#5e7268]">Akumulasi penghematan emisi karbon dari pengiriman mode hijau yang Anda buat.</p>
+        </div>
+
+        <div class="rounded-3xl p-6 bg-[#153d32] text-[#d8ec9c] shadow-lg">
+          <p class="text-xs uppercase tracking-wider font-bold text-[#b8e071]">Total Emisi CO₂ Dihemat (Simulasi)</p>
+          <strong id="p-i-co2" class="brand text-4xl sm:text-5xl font-bold block mt-2">±0,70 kg</strong>
+          <p class="text-xs text-[#cbe0ce] mt-2">Berdasarkan kontribusi konsolidasi rute 0,70 kg CO₂ per batch kolaborasi (+0,06 kg CO₂ per paket hijau).</p>
+          <div class="my-5 border-t border-white/20"></div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-xs text-[#cbe0ce]">Pengiriman Hijau</p>
+              <strong id="p-i-count" class="brand text-2xl sm:text-3xl font-bold block mt-0.5">1</strong>
+            </div>
+            <div>
+              <p class="text-xs text-[#cbe0ce]">Total Paket Hijau</p>
+              <strong id="p-i-pkgs" class="brand text-2xl sm:text-3xl font-bold block mt-0.5">2 paket</strong>
+            </div>
+          </div>
+        </div>
+
+        <div id="p-badge" class="surface-card mt-4 flex items-center gap-4 p-5">
+          <div class="w-12 h-12 rounded-2xl bg-[#e7f1d8] text-[#153d32] grid place-items-center text-2xl font-bold shrink-0">🌱</div>
+          <div>
+            <h3 class="font-bold text-base">Mitra Pengirim Hijau Aktif</h3>
+            <p class="text-xs text-[#5e7268] mt-0.5">Anda telah berpartisipasi dalam pengurangan jarak tempuh armada (VMT) di Kota Malang melalui konsolidasi Micro-Hub Merjosari.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- ROLE 3: ANTARMUKA VENDOR 3PL (3PL VENDOR MANAGEMENT INTERFACE)      -->
+    <!-- =================================================================== -->
+    <div id="view-vendor" class="role-view" hidden>
+
+      <!-- Vendor Sub-panel 1: Dasbor Operasional -->
+      <section id="v-panel-dashboard" class="v-panel">
+        <div class="mb-4">
+          <p class="eyebrow">MANAJEMEN VENDOR 3PL · ECO HEMAT × KILAT RAYA</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Dasbor Operasional Vendor 3PL</h2>
+          <p class="text-sm text-[#5e7268]">Pantau efisiensi armada dan status kolaborasi Load-Sharing antar-vendor secara langsung.</p>
+        </div>
+
+        <div class="soft-card p-4 flex flex-wrap items-center justify-between gap-2 mb-4">
+          <span class="text-sm font-bold text-[#153d32]">Status Kolaborasi Saat Ini:</span>
+          <span id="v-st-badge" class="text-xs sm:text-sm font-bold px-3.5 py-1 rounded-full bg-[#153d32] text-white">Kolaborasi Aktif (Disetujui)</span>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div class="surface-card p-4">
+            <h3 class="text-xs font-bold text-[#5e7268] uppercase">Load Factor · Kurir A (Eco Hemat)</h3>
+            <div id="v-m-load" class="brand text-2xl sm:text-3xl font-bold text-[#153d32] mt-2">40% → 80%</div>
+            <p id="v-m-load2" class="text-xs text-[#2f7651] font-semibold mt-1">Saat ini: 80% (24/30 paket)</p>
+          </div>
+          <div class="surface-card p-4">
+            <h3 class="text-xs font-bold text-[#5e7268] uppercase">VMT Gabungan 2 Vendor (Kurir A + B)</h3>
+            <div id="v-m-vmt" class="brand text-2xl sm:text-3xl font-bold text-[#153d32] mt-2">36 → 26 km</div>
+            <p id="v-m-vmt2" class="text-xs text-[#5e7268] mt-1">Kurir A: 18→20 km (+2 km detour) · Kurir B: 18→6 km</p>
+          </div>
+          <div class="surface-card p-4">
+            <h3 class="text-xs font-bold text-[#5e7268] uppercase">Emisi CO₂ Gabungan</h3>
+            <div id="v-m-co2" class="brand text-2xl sm:text-3xl font-bold text-[#153d32] mt-2">2,52 → 1,82 kg</div>
+            <p id="v-m-co22" class="text-xs text-[#2f7651] font-semibold mt-1">Saat ini: 1,82 kg (Hemat 0,70 kg)</p>
+          </div>
+          <div class="surface-card p-4">
+            <h3 class="text-xs font-bold text-[#5e7268] uppercase">Biaya Operasional per Paket</h3>
+            <div id="v-m-cost" class="brand text-2xl sm:text-3xl font-bold text-[#153d32] mt-2">Rp 3.750 → Rp 2.858</div>
+            <p id="v-m-cost2" class="text-xs text-[#2f7651] font-semibold mt-1">Saat ini: Rp 2.858 / paket</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vendor Sub-panel 2: Armada -->
+      <section id="v-panel-fleet" class="v-panel" hidden>
+        <div class="mb-4">
+          <p class="eyebrow">KAPASITAS ARMADA REAL-TIME</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Status Armada Eco Hemat &amp; Mitra</h2>
+          <p class="text-sm text-[#5e7268]">Kapasitas Kurir A otomatis menyesuaikan keputusan kolaborasi dan kiriman dari Pengirim.</p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="surface-card p-5">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="font-bold text-base">Kurir A · Eco Hemat (Armada Kolaborasi Utama)</h3>
+                <p id="v-a-d" class="text-xs sm:text-sm text-[#5e7268] mt-1">24 dari 30 paket · 80%</p>
+              </div>
+              <span class="text-xs font-bold px-3 py-1 rounded-full bg-[#e7f1d8] text-[#153d32]">Beroperasi</span>
+            </div>
+            <div class="h-3 bg-[#e6eee0] rounded-full mt-3 overflow-hidden" role="progressbar" aria-label="Kapasitas Kurir A" id="v-a-pb" aria-valuemin="0" aria-valuemax="100" aria-valuenow="80">
+              <div id="v-a-f" class="h-full bg-[#2f7651] rounded-full transition-all duration-300" style="width: 80%"></div>
+            </div>
+            <p id="v-a-r" class="text-xs text-[#5e7268] mt-2">V_rem = V_max − V_used = 30 − 24 = 6 paket tersisa</p>
+          </div>
+
+          <div class="surface-card p-5">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="font-bold text-base">Kurir B · Kilat Raya (Mitra Penyerah di Hub Merjosari)</h3>
+                <p class="text-xs sm:text-sm text-[#5e7268] mt-1">Menyerahkan 12 paket di Hub Merjosari · Rute dipangkas 18 → 6 km</p>
+              </div>
+              <span class="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900">Mitra 3PL</span>
+            </div>
+            <div class="h-3 bg-[#e6eee0] rounded-full mt-3 overflow-hidden">
+              <div class="h-full bg-[#d97706] rounded-full" style="width: 40%"></div>
+            </div>
+          </div>
+
+          <div class="surface-card p-5">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="font-bold text-base">Kurir C · Eco Hemat (Rute Reguler Blimbing)</h3>
+                <p class="text-xs sm:text-sm text-[#5e7268] mt-1">Kapasitas terpakai: 65% (20/30 paket)</p>
+              </div>
+              <span class="text-xs font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-700">Di Hub</span>
+            </div>
+            <div class="h-3 bg-[#e6eee0] rounded-full mt-3 overflow-hidden">
+              <div class="h-full bg-[#2f7651] rounded-full" style="width: 65%"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vendor Sub-panel 3: Kolaborasi Rute -->
+      <section id="v-panel-collab" class="v-panel" hidden>
+        <div class="mb-4">
+          <p class="eyebrow">KEBIJAKAN &amp; PERSETUJUAN LOAD-SHARING</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Pengaturan Kolaborasi Antar-Vendor</h2>
+          <p class="text-sm text-[#5e7268]">Setiap perubahan di sini langsung memengaruhi keputusan Mesin Pencocokan Rute di antarmuka <strong>Kurir</strong>.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="surface-card p-5 space-y-4">
+            <h3 class="font-bold text-base">Parameter Kebijakan Eco Hemat</h3>
+
+            <label class="flex items-center justify-between gap-3 py-2 border-b border-[#edf2e8] cursor-pointer">
+              <span class="text-sm font-medium">Aktifkan Kolaborasi Load-Sharing</span>
+              <input id="v-sharing" type="checkbox" checked class="w-5 h-5 accent-[#153d32]">
+            </label>
+
+            <div class="py-2 border-b border-[#edf2e8]">
+              <div class="flex justify-between items-center mb-1">
+                <label for="v-threshold" class="text-sm font-medium">Ambang Kemiripan Rute Minimum (δ)</label>
+                <strong id="v-th-o" class="text-sm font-bold text-[#153d32]">δ = 0,75</strong>
+              </div>
+              <input id="v-threshold" type="range" min="0.50" max="0.95" step="0.01" value="0.75">
+              <p class="text-xs text-[#5e7268] mt-1">Indeks kemiripan rute Kilat Raya saat ini adalah <strong>δ = 0,82</strong>. Jika ambang diatur &gt; 0,82, kolaborasi otomatis ditolak.</p>
+            </div>
+
+            <div class="flex items-center justify-between gap-3 py-2 border-b border-[#edf2e8]">
+              <label for="v-detour" class="text-sm font-medium">Batas Jarak Memutar Maksimum (km)</label>
+              <input id="v-detour" type="number" min="0" max="20" step="0.5" value="2" class="field-input w-24 text-center font-bold">
+            </div>
+
+            <div>
+              <h4 class="text-xs font-bold uppercase text-[#5e7268] mb-2">Data Manifest yang Dibagikan (Terenkripsi)</h4>
+              <div class="space-y-2 text-sm">
+                <label class="flex items-center justify-between cursor-pointer"><span>Area Tujuan (Kecamatan/Kelurahan)</span><input id="v-area" type="checkbox" checked class="w-4 h-4 accent-[#153d32]"></label>
+                <label class="flex items-center justify-between cursor-pointer"><span>Volume Paket</span><input id="v-volume" type="checkbox" checked class="w-4 h-4 accent-[#153d32]"></label>
+                <label class="flex items-center justify-between cursor-pointer"><span>Bobot Paket</span><input id="v-weight" type="checkbox" checked class="w-4 h-4 accent-[#153d32]"></label>
+                <label class="flex items-center justify-between text-[#5e7268] opacity-75"><span>Nama &amp; Nomor HP Penerima (Privasi Dikunci)</span><input type="checkbox" disabled class="w-4 h-4"></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="surface-card p-5 flex flex-col justify-between">
+            <div>
+              <p class="eyebrow">PERMINTAAN KOLABORASI MASUK</p>
+              <h3 class="brand text-2xl font-bold mt-1">Mitra: Kilat Raya (Kurir B)</h3>
+              <p class="text-sm text-[#5e7268] mt-2">Meminta serah terima <strong>12 paket</strong> di <strong>Hub Kel. Merjosari</strong>.</p>
+              <ul class="text-xs sm:text-sm space-y-1.5 mt-3 bg-[#f3f6ec] p-3.5 rounded-xl">
+                <li>• Kemiripan Spasial Rute: <strong>δ = 0,82</strong> (Konsisten dengan mesin Kurir)</li>
+                <li>• Jarak Memutar Kurir A: <strong>±2,0 km</strong> (18 km → 20 km)</li>
+                <li>• Penghematan VMT Gabungan: <strong>10 km</strong> (36 km → 26 km)</li>
+                <li>• Penghematan Emisi Gabungan: <strong>0,70 kg CO₂</strong></li>
+              </ul>
+
+              <div class="soft-card p-3.5 mt-4 flex items-center justify-between font-bold text-sm" id="v-rq">
+                <span>Keputusan Vendor</span>
+                <span id="v-rq-val">Kolaborasi Aktif</span>
+              </div>
+
+              <p id="v-why" class="bg-amber-100 text-amber-900 rounded-xl p-3 text-xs font-bold mt-3" hidden role="status"></p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mt-5">
+              <button type="button" id="v-ok-btn" class="btn-primary">✓ Setujui Kolaborasi</button>
+              <button type="button" id="v-no-btn" class="btn-secondary">✕ Tolak (Rute Langsung)</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vendor Sub-panel 4: Laporan & Pembagian Biaya -->
+      <section id="v-panel-report" class="v-panel" hidden>
+        <div class="mb-4">
+          <p class="eyebrow">LAPORAN KEUANGAN &amp; AUDIT SERAH TERIMA</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Laporan Kolaborasi &amp; Log Serah Terima</h2>
+        </div>
+
+        <div class="surface-card p-5 mb-4 overflow-x-auto">
+          <h3 class="font-bold text-base mb-3">Ringkasan Metrik Sebelum vs Sesudah</h3>
+          <table class="w-full text-sm text-left border-collapse">
+            <thead>
+              <tr class="border-b border-[#dbe4d5] text-[#5e7268]">
+                <th class="py-2 px-2">Metrik</th>
+                <th class="py-2 px-2">Sebelum (Mandiri)</th>
+                <th class="py-2 px-2 text-[#287044]">Sesudah (Load-Sharing)</th>
+              </tr>
+            </thead>
+            <tbody id="v-tb" class="divide-y divide-[#edf2e8]"></tbody>
+          </table>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="surface-card p-5">
+            <h3 class="font-bold text-base">Skema Pembagian Biaya (Cost-Sharing)</h3>
+            <p class="text-sm text-[#5e7268] mt-2 leading-relaxed">Proporsi muatan <strong>12 : 12 paket</strong>. Total biaya operasional gabungan <strong>Rp 68.600</strong> dibagi rata menjadi <strong>Rp 34.300 per vendor</strong> (Rp 2.858/paket), turun dari biaya mandiri Rp 45.000 per vendor (Rp 3.750/paket).</p>
+          </div>
+          <div class="surface-card p-5">
+            <h3 class="font-bold text-base">Bukti Waktu Serah Terima &amp; OTP</h3>
+            <p id="v-h1" class="text-sm font-medium mt-2"></p>
+            <p id="v-h2" class="text-sm font-medium mt-1"></p>
+            <p id="v-h-otp" class="text-xs text-[#287044] font-bold mt-2"></p>
+          </div>
+        </div>
+
+        <div class="surface-card p-5 mt-4">
+          <h3 class="font-bold text-base mb-2">Riwayat Keputusan Vendor</h3>
+          <ul id="v-hist" class="text-xs sm:text-sm text-[#5e7268] space-y-1.5 list-disc pl-5"></ul>
+        </div>
+      </section>
+
+      <!-- Vendor Sub-panel 5: Integrasi & Keamanan Data -->
+      <section id="v-panel-integ" class="v-panel" hidden>
+        <div class="mb-4">
+          <p class="eyebrow">STATUS SINKRONISASI &amp; PRIVASI</p>
+          <h2 class="brand text-2xl sm:text-3xl font-bold mt-0.5">Integrasi Database &amp; Keamanan</h2>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="surface-card p-5">
+            <h3 id="v-dbst" class="font-bold text-base">Status Sinkronisasi</h3>
+            <p id="v-sync" class="text-xs text-[#5e7268] mt-1"></p>
+            <div class="flex flex-wrap gap-2 mt-4">
+              <button type="button" id="v-sync-btn" class="btn-primary text-xs">↻ Sinkronkan Sekarang</button>
+              <button type="button" id="v-config-btn2" class="btn-secondary text-xs">⚙️ Pengaturan Supabase</button>
+            </div>
+          </div>
+
+          <div class="surface-card p-5">
+            <h3 class="font-bold text-base mb-2">Status Enkripsi Atribut Manifest</h3>
+            <ul id="v-enc" class="text-sm space-y-1.5"></ul>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Bottom Sub-Navigation (Changes dynamically based on active Role!) -->
+  <nav class="bottom-nav" aria-label="Sub-navigasi antarmuka">
+    <!-- Kurir Bottom Nav -->
+    <div id="nav-kurir" class="max-w-xl mx-auto grid grid-cols-5 gap-1">
+      <button type="button" class="sub-tab-btn active" data-k-tab="dashboard"><span class="block text-base">🗺️</span>Dasbor</button>
+      <button type="button" class="sub-tab-btn" data-k-tab="tasks"><span class="block text-base">🤝</span>Tugas 2 Vendor</button>
+      <button type="button" class="sub-tab-btn" data-k-tab="route"><span class="block text-base">🧭</span>Simulasi Rute</button>
+      <button type="button" class="sub-tab-btn" data-k-tab="hub"><span class="block text-base">🏢</span>Hub Merjosari</button>
+      <button type="button" class="sub-tab-btn" data-k-tab="verify"><span class="block text-base">🔐</span>Verifikasi OTP</button>
+    </div>
+    <!-- Pengirim Bottom Nav -->
+    <div id="nav-pengirim" class="max-w-xl mx-auto grid grid-cols-4 gap-1" hidden>
+      <button type="button" class="sub-tab-btn active" data-p-tab="create"><span class="block text-base">➕</span>Buat Kiriman</button>
+      <button type="button" class="sub-tab-btn" data-p-tab="track"><span class="block text-base">📍</span>Lacak</button>
+      <button type="button" class="sub-tab-btn" data-p-tab="history"><span class="block text-base">📋</span>Riwayat</button>
+      <button type="button" class="sub-tab-btn" data-p-tab="impact"><span class="block text-base">🌱</span>Dampak CO₂</button>
+    </div>
+    <!-- Vendor 3PL Bottom Nav -->
+    <div id="nav-vendor" class="max-w-xl mx-auto grid grid-cols-5 gap-1" hidden>
+      <button type="button" class="sub-tab-btn active" data-v-tab="dashboard"><span class="block text-base">📊</span>Dasbor</button>
+      <button type="button" class="sub-tab-btn" data-v-tab="fleet"><span class="block text-base">🚚</span>Armada</button>
+      <button type="button" class="sub-tab-btn" data-v-tab="collab"><span class="block text-base">⇄</span>Kolaborasi</button>
+      <button type="button" class="sub-tab-btn" data-v-tab="report"><span class="block text-base">📑</span>Laporan</button>
+      <button type="button" class="sub-tab-btn" data-v-tab="integ"><span class="block text-base">⚙️</span>Integrasi</button>
+    </div>
+  </nav>
+
+  <script>
+  (() => {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const STORAGE_KEY = 'ecologix_unified_state_v2';
+    const CFG_KEY = 'ecologix_supabase_cfg_v2';
+    const STAGES = ['Diterima', 'Pengambilan', 'Transit Hub', 'Serah terima', 'Pengantaran', 'Selesai'];
+
+    // Coordinates in Lowokwaru, Kota Malang
+    const COORDS = {
+      hub: [-7.9448, 112.6024],
+      a: [-7.9521, 112.6160],
+      b: [-7.9345, 112.6107]
+    };
+    const SHARED_POINTS = [
+      COORDS.a,
+      [-7.9494, 112.6101],
+      COORDS.hub,
+      [-7.9416, 112.5984],
+      [-7.9370, 112.6050],
+      COORDS.b
+    ];
+    const DIRECT_POINTS_A = [COORDS.a, [-7.9480, 112.6200], [-7.9390, 112.6190], COORDS.b];
+    const DIRECT_POINTS_B = [COORDS.b, [-7.9309, 112.6040], [-7.9372, 112.5920], [-7.9480, 112.5980], COORDS.a];
+
+    const COURIERS = {
+      a: { name: 'Kurir A · Eco Hemat', vendor: 'Eco Hemat', point: COORDS.a, baseUsed: 12, max: 30 },
+      b: { name: 'Kurir B · Kilat Raya', vendor: 'Kilat Raya', point: COORDS.b, baseUsed: 12, max: 30 }
+    };
+
+    const DEFAULT_ACCOUNTS = {
+      kurir_a: { id: 'kurir_a', email: 'kurir.a@ecohemat.id', pass: 'demo1234', name: 'Budi Santoso', role: 'kurir', courierCode: 'a', badge: 'Kurir A · Eco Hemat' },
+      kurir_b: { id: 'kurir_b', email: 'kurir.b@kilatraya.id', pass: 'demo1234', name: 'Andi Pratama', role: 'kurir', courierCode: 'b', badge: 'Kurir B · Kilat Raya' },
+      pengirim: { id: 'pengirim', email: 'pengirim@umkm-malang.id', pass: 'demo1234', name: 'UMKM Kopi Malang', role: 'pengirim', courierCode: null, badge: 'Pengirim' },
+      vendor: { id: 'vendor', email: 'admin@ecohemat-3pl.id', pass: 'demo1234', name: 'Rina Wijaya', role: 'vendor', courierCode: null, badge: 'Admin Vendor 3PL' }
+    };
+
+    function randomOtp() {
+      try {
+        const arr = new Uint32Array(1);
+        crypto.getRandomValues(arr);
+        return String(1000 + (arr[0] % 9000));
+      } catch (e) {
+        return String(Math.floor(1000 + Math.random() * 9000));
+      }
+    }
+
+    function haversine(p, q) {
+      const r = Math.PI / 180;
+      const dLat = (q[0] - p[0]) * r;
+      const dLon = (q[1] - p[1]) * r;
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(p[0] * r) * Math.cos(q[0] * r) * Math.sin(dLon / 2) ** 2;
+      return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+    }
+
+    function computeDelta(from, to) {
+      const direct = haversine(from, to);
+      const via = haversine(from, COORDS.hub) + haversine(COORDS.hub, to);
+      return Math.max(0, Math.min(1, 1 - 0.5 * ((via - direct) / via)));
+    }
+
+    const fmt = (n, d = 2) => Number(n).toLocaleString('id-ID', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const rp = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+    const timeFmt = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false });
+    const wib = d => timeFmt.format(d ? new Date(d) : new Date()).replace('.', ':') + ' WIB';
+
+    function defaultState() {
+      const initOtp = randomOtp();
+      const now = Date.now();
+      return {
+        role: 'kurir',
+        strictRbac: false,
+        currentUser: DEFAULT_ACCOUNTS.kurir_a,
+        customAccounts: [],
+        kTab: 'dashboard',
+        pTab: 'create',
+        vTab: 'dashboard',
+        courier: 'a',
+        progress: 0,
+        running: false,
+        verified: false,
+        otp: initOtp,
+        alpha: 70,
+        beta: 30,
+        logs: [],
+        vendor: {
+          sharing: true,
+          threshold: 0.75,
+          detour: 2.0,
+          area: true,
+          volume: true,
+          weight: true,
+          decision: 'approved',
+          decidedAt: now,
+          syncAt: now,
+          history: [{ d: 'approved', at: now }]
+        },
+        shipments: [
+          {
+            id: 'ELX-MLG01',
+            createdAt: now - 300000,
+            sender: 'UMKM Kopi Malang',
+            city: 'Kota Malang',
+            pickupDistrict: 'Lowokwaru',
+            pickupAddress: 'Jl. MT Haryono No. 45, Dinoyo',
+            destinationDistrict: 'Lowokwaru',
+            destinationAddress: 'Jl. Gajayana No. 18, Ketawanggede',
+            packageType: 'Paket kecil',
+            quantity: 2,
+            notes: 'Kopi bubuk kemasan rapat',
+            mode: 'hijau',
+            stage: 0,
+            otp: initOtp
+          }
+        ],
+        selectedShipmentId: 'ELX-MLG01'
+      };
+    }
+
+    let state = defaultState();
+    let simTimer = null;
+    let dashMap = null, routeMap = null, separateLayers = null, sharedLayer = null, simMarker = null, simPolyline = null;
+    let sbClient = null;
+    let dbMode = 'local';
+
+    // Load saved state safely
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        state = {
+          ...defaultState(),
+          ...parsed,
+          vendor: { ...defaultState().vendor, ...(parsed.vendor || {}) },
+          shipments: Array.isArray(parsed.shipments) && parsed.shipments.length ? parsed.shipments : defaultState().shipments
+        };
+        state.running = false;
+      }
+    } catch (e) { /* fallback to defaultState */ }
+
+    // Toast helper (replaces blocked alert)
+    let toastTimeout = null;
+    function showToast(msg) {
+      const box = $('toast-box');
+      if (!box) return;
+      box.textContent = msg;
+      box.hidden = false;
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { box.hidden = true; }, 3200);
+    }
+
+    // Save state to localStorage + broadcast across tabs + optional Supabase
+    function saveState(updateSyncTime = false) {
+      if (updateSyncTime) state.vendor.syncAt = Date.now();
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) { /* ignore quota error */ }
+      if (sbClient) {
+        sbClient.from('vendor_state').upsert({
+          id: 'eco-hemat',
+          data: {
+            vendor: state.vendor,
+            courier: state.courier,
+            progress: state.progress,
+            verified: state.verified,
+            otp: state.otp,
+            alpha: state.alpha,
+            beta: state.beta,
+            logs: state.logs,
+            shipments: state.shipments,
+            selectedShipmentId: state.selectedShipmentId
+          },
+          updated_at: new Date().toISOString()
+        }).then(({ error }) => {
+          if (!error) setConnStatus('online', 'Tersimpan & Tersinkron di Supabase Cloud');
+        }).catch(() => {});
+      }
+    }
+
+    window.addEventListener('storage', e => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const incoming = JSON.parse(e.newValue);
+          state = { ...state, ...incoming, running: false };
+          renderAll();
+        } catch (err) {}
+      }
+    });
+
+    function setConnStatus(kind, text) {
+      dbMode = kind;
+      $('conn-status').textContent = text;
+      const dot = $('conn-dot');
+      dot.className = 'w-2 h-2 rounded-full ' + (kind === 'online' ? 'bg-[#b8e071]' : kind === 'error' ? 'bg-red-400' : 'bg-amber-300');
+    }
+
+    // Check if Load-Sharing is currently active & allowed
+    function getVendorBlocker() {
+      const v = state.vendor;
+      const delta = computeDelta(COORDS.a, COORDS.b); // ~0.82
+      const detourKm = 2.0;
+      const extraGreenPkgs = getActiveShipment() && getActiveShipment().mode === 'hijau' ? 0 : 0;
+      if (!v.sharing) return 'Fitur "Ikut Load-Sharing" dinonaktifkan oleh Vendor 3PL.';
+      if (delta < v.threshold) return `Indeks kemiripan rute (δ = ${fmt(delta, 2)}) di bawah ambang minimum Vendor (δ = ${fmt(v.threshold, 2)}).`;
+      if (detourKm > v.detour) return `Jarak memutar Kurir A (2,0 km) melebihi batas maksimum Vendor (${fmt(v.detour, 1)} km).`;
+      if (COURIERS.a.baseUsed + 12 + extraGreenPkgs > COURIERS.a.max) return 'Kapasitas Kurir A melampaui batas 30 paket.';
+      return '';
+    }
+
+    function isLoadSharingActive() {
+      const blocker = getVendorBlocker();
+      if (blocker) return false;
+      return state.vendor.decision === 'approved';
+    }
+
+    function isGreenRouteWinner() {
+      const alpha = state.alpha / 100;
+      const beta = state.beta / 100;
+      const zDirect = alpha * 8 + beta * 3;
+      const zHub = alpha * 5 + beta * 5;
+      return zHub <= zDirect;
+    }
+
+    function getActiveShipment() {
+      return state.shipments.find(s => s.id === state.selectedShipmentId) || state.shipments[0] || null;
+    }
+
+    // Initialize Maps
+    function initMaps() {
+      if (typeof window.L === 'undefined') {
+        ['k-dash-map', 'k-route-map'].forEach(id => {
+          const el = $(id);
+          if (el) el.innerHTML = '<div class="h-full grid place-items-center p-4 text-center text-xs text-[#5e7268]">Peta interaktif membutuhkan koneksi internet (Leaflet CDN). Skema rute tetap berjalan normal.</div>';
+        });
+        return;
+      }
+
+      dashMap = L.map('k-dash-map', { scrollWheelZoom: false }).setView([-7.944, 112.606], 13);
+      dashMap.attributionControl.setPrefix(false);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(dashMap);
+
+      separateLayers = L.layerGroup([
+        L.polyline(DIRECT_POINTS_A, { color: '#7c8781', weight: 4, dashArray: '6 7', opacity: 0.85 }),
+        L.polyline(DIRECT_POINTS_B, { color: '#7c8781', weight: 4, dashArray: '6 7', opacity: 0.85 })
+      ]).addTo(dashMap);
+
+      sharedLayer = L.polyline(SHARED_POINTS, { color: '#247c48', weight: 5, opacity: 0.95 }).addTo(dashMap);
+      L.circleMarker(COORDS.hub, { radius: 9, color: '#153d32', fillColor: '#b8e071', fillOpacity: 1, weight: 3 }).addTo(dashMap).bindPopup('<b>Hub Kel. Merjosari</b><br>Titik Serah Terima 12 Paket');
+      L.circleMarker(COORDS.a, { radius: 7, color: '#153d32', fillColor: '#ffffff', fillOpacity: 1, weight: 2.5 }).addTo(dashMap).bindPopup('<b>Kurir A · Eco Hemat</b>');
+      L.circleMarker(COORDS.b, { radius: 7, color: '#153d32', fillColor: '#ffffff', fillOpacity: 1, weight: 2.5 }).addTo(dashMap).bindPopup('<b>Kurir B · Kilat Raya</b>');
+      dashMap.fitBounds(L.latLngBounds([...DIRECT_POINTS_A, ...DIRECT_POINTS_B, COORDS.hub]).pad(0.14));
+
+      routeMap = L.map('k-route-map', { scrollWheelZoom: false }).setView([-7.944, 112.606], 13);
+      routeMap.attributionControl.setPrefix(false);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(routeMap);
+
+      simPolyline = L.polyline(SHARED_POINTS, { color: '#247c48', weight: 5 }).addTo(routeMap);
+      L.circleMarker(COORDS.hub, { radius: 8, color: '#153d32', fillColor: '#b8e071', fillOpacity: 1, weight: 2.5 }).addTo(routeMap).bindPopup('Hub Kel. Merjosari');
+      simMarker = L.circleMarker(COORDS.a, { radius: 10, color: '#ffffff', fillColor: '#153d32', fillOpacity: 1, weight: 3 }).addTo(routeMap).bindPopup('Posisi Kurir Saat Ini');
+      routeMap.fitBounds(L.latLngBounds(SHARED_POINTS).pad(0.18));
+    }
+
+    function getActiveRoutePoints() {
+      const collab = isLoadSharingActive() && isGreenRouteWinner();
+      if (!collab) {
+        return state.courier === 'a' ? DIRECT_POINTS_A : DIRECT_POINTS_B;
+      }
+      return state.courier === 'a' ? SHARED_POINTS : [...SHARED_POINTS].reverse();
+    }
+
+    // Role & Tab Navigation
+    function switchRole(role, fromAccountLogin = false) {
+      if (!fromAccountLogin && state.strictRbac && state.currentUser && state.currentUser.role !== role) {
+        showToast(`Akun "${state.currentUser.name}" hanya memiliki akses ke antarmuka ${state.currentUser.badge}. Pilih akun yang sesuai atau matikan kunci RBAC.`);
+        $('auth-modal').hidden = false;
+        return;
+      }
+      state.role = role;
+      ['kurir', 'pengirim', 'vendor'].forEach(r => {
+        $('view-' + r).hidden = r !== role;
+        $('nav-' + r).hidden = r !== role;
+      });
+      $('role-btn-kurir').classList.toggle('active', role === 'kurir');
+      $('role-btn-pengirim').classList.toggle('active', role === 'pengirim');
+      $('role-btn-vendor').classList.toggle('active', role === 'vendor');
+      renderAll();
+      if (role === 'kurir') {
+        setTimeout(() => {
+          if (dashMap && state.kTab === 'dashboard') dashMap.invalidateSize();
+          if (routeMap && state.kTab === 'route') routeMap.invalidateSize();
+        }, 80);
+      }
+      saveState();
+    }
+
+    function switchKurirTab(tab) {
+      state.kTab = tab;
+      ['dashboard', 'tasks', 'route', 'hub', 'verify'].forEach(t => {
+        $('k-panel-' + t).hidden = t !== tab;
+      });
+      document.querySelectorAll('[data-k-tab]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.kTab === tab);
+      });
+      renderAll();
+      setTimeout(() => {
+        if (tab === 'dashboard' && dashMap) dashMap.invalidateSize();
+        if (tab === 'route' && routeMap) routeMap.invalidateSize();
+      }, 80);
+      saveState();
+    }
+
+    function switchPengirimTab(tab) {
+      state.pTab = tab;
+      ['create', 'track', 'history', 'impact'].forEach(t => {
+        $('p-panel-' + t).hidden = t !== tab;
+      });
+      document.querySelectorAll('[data-p-tab]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.pTab === tab);
+      });
+      renderAll();
+      saveState();
+    }
+
+    function switchVendorTab(tab) {
+      state.vTab = tab;
+      ['dashboard', 'fleet', 'collab', 'report', 'integ'].forEach(t => {
+        $('v-panel-' + t).hidden = t !== tab;
+      });
+      document.querySelectorAll('[data-v-tab]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.vTab === tab);
+      });
+      renderAll();
+      saveState();
+    }
+
+    // Master Render
+    function renderAll() {
+      const collab = isLoadSharingActive();
+      const activeShip = getActiveShipment();
+      if (activeShip) {
+        state.otp = activeShip.otp;
+      }
+
+      // Render Active Account in Header
+      const u = state.currentUser || DEFAULT_ACCOUNTS.kurir_a;
+      $('active-user-label').textContent = `${u.name} (${u.badge})`;
+      $('rbac-lock-badge').textContent = state.strictRbac ? '🔒 Role Terkunci' : '🔓 Demo Bebas';
+      $('rbac-strict-toggle').checked = !!state.strictRbac;
+
+      // Global Top Badges & Sync Bar
+      const badge = $('global-collab-badge');
+      badge.textContent = collab ? 'Load-Sharing 2 Vendor Aktif' : 'Mode Rute Langsung (Mandiri)';
+      badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full ' + (collab ? 'bg-[#b8e071] text-[#153d32]' : 'bg-amber-200 text-amber-900');
+
+      const stepIdx = Math.min(5, Math.floor(state.progress / 20));
+      $('sync-bar-ships').textContent = `${state.shipments.length} pengiriman (${activeShip ? STAGES[activeShip.stage] : 'Kosong'})`;
+      $('sync-bar-vendor').textContent = collab ? `Disetujui (δ ≥ ${fmt(state.vendor.threshold, 2)})` : 'Rute Langsung / Ditolak';
+      $('sync-bar-kurir').textContent = `${COURIERS[state.courier].vendor} · ${state.progress}% (${STAGES[stepIdx]})`;
+      $('sync-bar-otp').textContent = `OTP: ${state.otp} ${state.verified ? '✓ Terverifikasi' : ''}`;
+
+      renderKurir(collab, activeShip);
+      renderPengirim(collab, activeShip);
+      renderVendor(collab, activeShip);
+    }
+
+    function renderKurir(collab, activeShip) {
+      const usedA = COURIERS.a.baseUsed + (collab ? 12 : 0);
+      const loadPct = Math.round((usedA / COURIERS.a.max) * 100);
+
+      $('k-map-badge').textContent = collab ? 'Rute Optimal: Kolaborasi via Hub Merjosari' : 'Rute Aktif: Langsung (Tanpa Hub)';
+      $('k-vmt-value').textContent = collab ? '36 → 26 km' : '36 km (Mandiri)';
+      $('k-vmt-sub').textContent = collab ? 'Hemat 10 km (27,8%)' : 'Kolaborasi nonaktif (0 km dihemat)';
+      $('k-carbon-value').textContent = collab ? '0,70 kg' : '0,00 kg';
+      $('k-carbon-sub').textContent = collab ? 'Turun dari 2,52 → 1,82 kg' : 'Emisi tetap 2,52 kg CO₂';
+      $('k-fill-tag').textContent = `${usedA} / ${COURIERS.a.max} paket`;
+      $('k-fill-value').textContent = collab ? '40% → 80%' : '40% (12 paket)';
+      $('k-fill-bar').style.width = loadPct + '%';
+
+      // Tasks & Matching Engine
+      const c = COURIERS[state.courier];
+      const other = COURIERS[state.courier === 'a' ? 'b' : 'a'];
+      $('k-courier-a').classList.toggle('active', state.courier === 'a');
+      $('k-courier-b').classList.toggle('active', state.courier === 'b');
+      $('k-courier-name').textContent = c.name;
+      $('k-courier-role').textContent = state.courier === 'a'
+        ? 'Armada Penerima Konsolidasi di Hub Merjosari (20 km total rute)'
+        : 'Armada Penyerah Muatan ke Hub Merjosari (Rute dipangkas 18 → 6 km)';
+      $('k-courier-pkg-badge').textContent = collab
+        ? (state.courier === 'a' ? '12 + 12 = 24 paket' : '12 paket → Diserahkan di Hub')
+        : '12 paket mandiri';
+      $('k-courier-detail').textContent = state.courier === 'a'
+        ? `Membawa 12 paket awal Eco Hemat + ${collab ? '12 paket limpahan Kilat Raya dari Hub Kel. Merjosari' : '0 paket tambahan (kolaborasi nonaktif)'} dari kapasitas maksimum 30 paket.`
+        : `Membawa 12 paket Kilat Raya menuju Hub Kel. Merjosari untuk diserahterimakan kepada Kurir A (Eco Hemat), menghemat 12 km perjalanan duplikat.`;
+
+      const distToHub = haversine(c.point, COORDS.hub);
+      const delta = computeDelta(c.point, other.point);
+      const rem = c.max - c.baseUsed;
+      $('k-match-distance').textContent = `${fmt(distToHub, 2)} km`;
+      $('k-match-delta').textContent = fmt(delta, 2);
+      $('k-match-threshold').textContent = fmt(state.vendor.threshold, 2);
+      $('k-match-capacity').textContent = `${rem} paket`;
+
+      const blocker = getVendorBlocker();
+      const pill = $('k-vendor-policy-pill');
+      if (collab) {
+        pill.textContent = 'Kebijakan Vendor 3PL: Disetujui';
+        pill.className = 'text-xs font-bold px-3 py-1 rounded-full bg-[#e7f1d8] text-[#153d32]';
+        $('k-match-decision').textContent = 'Load-Sharing via Hub Merjosari (Aktif)';
+        $('k-match-decision').style.color = '#287044';
+      } else {
+        pill.textContent = blocker ? 'Diblokir Parameter Vendor' : 'Ditolak oleh Vendor 3PL';
+        pill.className = 'text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900';
+        $('k-match-decision').textContent = 'Rute Langsung Mandiri (' + (blocker || 'Vendor memilih Tolak') + ')';
+        $('k-match-decision').style.color = '#92400e';
+      }
+
+      // Green-Routing Calculator
+      $('k-alpha').value = state.alpha;
+      $('k-beta').value = state.beta;
+      const alpha = state.alpha / 100;
+      const beta = state.beta / 100;
+      $('k-alpha-val').textContent = fmt(alpha, 2);
+      $('k-beta-val').textContent = fmt(beta, 2);
+      const zDirect = alpha * 8 + beta * 3;
+      const zHub = alpha * 5 + beta * 5;
+      $('k-direct-score').textContent = `Z = ${fmt(zDirect, 2)}`;
+      $('k-hub-score').textContent = `Z = ${fmt(zHub, 2)}`;
+      $('k-opt-direct').classList.toggle('winner', zDirect < zHub);
+      $('k-opt-hub').classList.toggle('winner', zHub <= zDirect);
+      $('k-best-route-text').textContent = Math.abs(zDirect - zHub) < 1e-6
+        ? 'Hasil: Skor penalti kedua rute setara.'
+        : zHub < zDirect
+          ? `Rekomendasi Algoritma: Rute Kolaborasi via Hub menang (Z = ${fmt(zHub, 2)} lebih rendah dari ${fmt(zDirect, 2)}).`
+          : `Rekomendasi Algoritma: Rute Langsung menang karena bobot jumlah pemberhentian (β) sangat tinggi (Z = ${fmt(zDirect, 2)} vs ${fmt(zHub, 2)}).`;
+
+      // Route Simulation & Map Marker
+      const pts = getActiveRoutePoints();
+      const useHubRoute = collab && isGreenRouteWinner();
+      $('k-sim-route-label').textContent = useHubRoute
+        ? `Rute Aktif (${COURIERS[state.courier].vendor}): Kolaborasi via Hub Merjosari`
+        : `Rute Aktif (${COURIERS[state.courier].vendor}): Rute Langsung Tanpa Hub`;
+      $('k-sim-pct').textContent = `${Math.round(state.progress)}%`;
+
+      if (simPolyline && routeMap) {
+        simPolyline.setLatLngs(pts);
+        simPolyline.setStyle({ color: useHubRoute ? '#247c48' : '#64748b' });
+      }
+      if (simMarker && pts.length > 1) {
+        const seg = (pts.length - 1) * (state.progress / 100);
+        const idx = Math.min(pts.length - 2, Math.floor(seg));
+        const t = Math.min(1, seg - idx);
+        simMarker.setLatLng([
+          pts[idx][0] + (pts[idx + 1][0] - pts[idx][0]) * t,
+          pts[idx][1] + (pts[idx + 1][1] - pts[idx][1]) * t
+        ]);
+      }
+
+      const step = Math.min(5, Math.floor(state.progress / 20));
+      document.querySelectorAll('#k-step-list .step-item').forEach((el, i) => {
+        el.classList.toggle('done', i < step);
+        el.classList.toggle('current', i === step);
+      });
+
+      const totalCo2 = useHubRoute ? 1.82 : 2.52;
+      $('k-running-carbon').textContent = `${fmt((totalCo2 * state.progress) / 100, 2)} kg CO₂`;
+      $('k-sim-btn').textContent = state.progress >= 100
+        ? '↺ Ulangi Simulasi'
+        : state.running
+          ? '⏸ Jeda Simulasi'
+          : state.progress > 0
+            ? '▶ Lanjutkan Simulasi'
+            : '▶ Mulai Simulasi';
+
+      // Hub Merjosari Package List
+      const atHubCount = state.progress >= 40 && state.progress < 80 ? 12 : 0;
+      $('k-hub-count').textContent = `${atHubCount} / 12 paket`;
+      const greenShips = state.shipments.filter(s => s.mode === 'hijau');
+      $('k-hub-user-ships').textContent = `${greenShips.length} resi (${greenShips.reduce((a, b) => a + b.quantity, 0)} pkt)`;
+      $('k-hub-verify-status').textContent = state.verified ? '✓ Terverifikasi OTP' : 'Menunggu OTP';
+      $('k-hub-verify-status').className = 'brand text-xl font-bold mt-1 block ' + (state.verified ? 'text-[#287044]' : 'text-[#92400e]');
+
+      const pkgList = $('k-package-list');
+      pkgList.innerHTML = '';
+      // Show active sender shipments first
+      state.shipments.forEach(s => {
+        const row = document.createElement('div');
+        row.className = 'flex justify-between items-center gap-3 py-2.5 text-xs sm:text-sm bg-[#f5faed] px-3 rounded-lg my-1';
+        const left = document.createElement('div');
+        left.innerHTML = `<strong class="text-[#153d32]">${s.id} · ${s.sender}</strong> <span class="text-xs text-[#5e7268]">(${s.quantity} ${s.packageType} · ${s.mode === 'hijau' ? 'Mode Hijau' : 'Langsung'})</span>`;
+        const right = document.createElement('span');
+        right.className = 'font-bold text-[#287044]';
+        right.textContent = STAGES[s.stage];
+        row.append(left, right);
+        pkgList.appendChild(row);
+      });
+
+      for (let n = 1; n <= 12; n++) {
+        const row = document.createElement('div');
+        row.className = 'flex justify-between items-center gap-3 py-2.5 text-xs sm:text-sm px-2';
+        const name = document.createElement('strong');
+        name.textContent = `Paket Kolaborasi ECO-${String(n).padStart(3, '0')} (Kilat Raya → Eco Hemat)`;
+        const status = document.createElement('span');
+        status.className = 'font-semibold text-[#3b7654]';
+        status.textContent = state.progress >= 100
+          ? (state.verified ? 'Selesai & Terverifikasi ✓' : 'Selesai Diantar')
+          : state.verified
+            ? 'Terverifikasi OTP ✓'
+            : state.progress >= 80
+              ? 'Dalam Pengantaran'
+              : state.progress >= 60
+                ? 'Serah Terima di Hub'
+                : state.progress >= 40
+                  ? 'Tiba di Hub Merjosari'
+                  : state.progress >= 20
+                    ? 'Dijemput Kurir B'
+                    : 'Menunggu Penjemputan';
+        row.append(name, status);
+        pkgList.appendChild(row);
+      }
+
+      // Verification Tab
+      $('k-demo-otp').textContent = state.otp;
+      $('k-verified-count').textContent = `${state.verified ? 12 : 0} / 12 paket`;
+      $('k-verify-btn').disabled = state.verified;
+      $('k-verify-btn').textContent = state.verified ? '✓ Serah Terima Sudah Terverifikasi' : 'Verifikasi Serah Terima';
+      $('k-log-list').innerHTML = state.logs.length
+        ? state.logs.map(l => `<div class="py-1 border-b border-[#edf2e8]">✓ ${l}</div>`).join('')
+        : '<p class="text-[#5e7268]">Belum ada serah terima yang diverifikasi dengan OTP.</p>';
+    }
+
+    function renderPengirim(collab, activeShip) {
+      $('p-track-empty').hidden = !!activeShip;
+      $('p-track-content').hidden = !activeShip;
+      if (activeShip) {
+        const isGreen = activeShip.mode === 'hijau';
+        $('p-t-id').textContent = activeShip.id;
+        $('p-t-mode-badge').textContent = isGreen ? '🌿 Pengiriman Hijau (Via Hub)' : '⚡ Rute Langsung (Tanpa Hub)';
+        $('p-t-mode-badge').className = 'text-xs font-bold px-3 py-1 rounded-full ' + (isGreen ? 'bg-[#e7f1d8] text-[#153d32]' : 'bg-gray-200 text-gray-800');
+        $('p-t-status').textContent = STAGES[activeShip.stage];
+        $('p-t-route').textContent = `${activeShip.sender} · ${activeShip.pickupDistrict} (${activeShip.pickupAddress}) → ${activeShip.destinationDistrict} (${activeShip.destinationAddress}) · ${activeShip.quantity} ${activeShip.packageType}`;
+
+        $('p-steps').innerHTML = STAGES.map((label, i) => `
+          <li class="step-item ${i < activeShip.stage ? 'done' : i === activeShip.stage ? 'current' : ''}">
+            <span class="font-semibold text-sm">${i < activeShip.stage ? '✓ ' : (i + 1) + '. '}${label}</span>
+          </li>
+        `).join('');
+
+        $('p-advance-btn').disabled = activeShip.stage >= STAGES.length - 1;
+
+        // Dynamic story & SVG route based on Hijau vs Langsung!
+        if (isGreen && collab) {
+          $('p-story-text').textContent = `Paket Anda (${activeShip.quantity} ${activeShip.packageType}) digabungkan bersama 12 paket Kilat Raya di Hub Kel. Merjosari untuk diantar secara efisien oleh Kurir A (Eco Hemat).`;
+          $('p-story-sub').textContent = 'Menghemat jarak kolektif 36 → 26 km dan memangkas emisi sebesar 0,70 kg CO₂.';
+          $('p-svg-title').textContent = 'Skema Rute Kolaborasi via Hub Merjosari · Malang';
+          $('p-svg-hub-line').style.display = '';
+          $('p-svg-hub-node').style.display = '';
+          $('p-svg-hub-label').textContent = 'Hub Kel. Merjosari (Serah Terima)';
+        } else {
+          $('p-story-text').textContent = isGreen && !collab
+            ? `Anda memilih Pengiriman Hijau, namun kebijakan Vendor 3PL saat ini menonaktifkan kolaborasi, sehingga paket dialihkan ke Rute Langsung.`
+            : `Paket Anda (${activeShip.quantity} ${activeShip.packageType}) dikirim menggunakan Rute Langsung oleh 1 kurir dari titik jemput ke alamat tujuan tanpa transit di Micro-Hub Merjosari.`;
+          $('p-story-sub').textContent = 'Mode pengiriman langsung: waktu tempuh standar tanpa konsolidasi antar-vendor.';
+          $('p-svg-title').textContent = 'Skema Rute Langsung (Tanpa Transit Hub) · Malang';
+          $('p-svg-hub-line').style.display = 'none';
+          $('p-svg-hub-node').style.display = 'none';
+          $('p-svg-hub-label').textContent = 'Rute Langsung Tanpa Transit Hub';
+        }
+
+        $('p-otp-display').textContent = activeShip.otp;
+        const otpPill = $('p-otp-verified-pill');
+        otpPill.textContent = state.verified ? '✓ Sudah Diverifikasi Kurir' : 'Menunggu Verifikasi Kurir';
+        otpPill.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full ' + (state.verified ? 'bg-[#e7f1d8] text-[#153d32]' : 'bg-amber-100 text-amber-800');
+      }
+
+      // History List
+      $('p-h-empty').hidden = state.shipments.length > 0;
+      const hList = $('p-h-list');
+      hList.innerHTML = '';
+      state.shipments.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'surface-card p-4 flex flex-wrap items-center justify-between gap-3 ' + (s.id === state.selectedShipmentId ? 'border-2 border-[#153d32]' : '');
+        const info = document.createElement('div');
+        info.innerHTML = `
+          <div class="flex items-center gap-2">
+            <strong class="text-base">${s.id}</strong>
+            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#e7f1d8] text-[#153d32]">${STAGES[s.stage]}</span>
+            <span class="text-xs text-[#5e7268]">${s.mode === 'hijau' ? '🌿 Hijau' : '⚡ Langsung'}</span>
+          </div>
+          <p class="text-xs text-[#5e7268] mt-1">${s.sender} · ${s.pickupDistrict} → ${s.destinationDistrict} · ${s.quantity} ${s.packageType} · OTP: <strong>${s.otp}</strong></p>
+        `;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-secondary text-xs';
+        btn.textContent = s.id === state.selectedShipmentId ? '✓ Sedang Dilacak' : 'Lacak Resi Ini';
+        btn.addEventListener('click', () => {
+          state.selectedShipmentId = s.id;
+          state.otp = s.otp;
+          switchPengirimTab('track');
+        });
+        card.append(info, btn);
+        hList.appendChild(card);
+      });
+
+      // Environmental Impact
+      const greenList = state.shipments.filter(s => s.mode === 'hijau');
+      const totalGreenPkgs = greenList.reduce((acc, s) => acc + s.quantity, 0);
+      const co2Saved = (collab ? 0.70 : 0) + totalGreenPkgs * 0.03;
+      $('p-i-co2').textContent = `±${fmt(co2Saved, 2)} kg`;
+      $('p-i-count').textContent = String(greenList.length);
+      $('p-i-pkgs').textContent = `${totalGreenPkgs} paket`;
+      $('p-badge').hidden = greenList.length < 1;
+    }
+
+    function renderVendor(collab, activeShip) {
+      const v = state.vendor;
+      const blocker = getVendorBlocker();
+      const used = COURIERS.a.baseUsed + (collab ? 12 : 0);
+      const load = Math.round((used / COURIERS.a.max) * 100);
+      const load0 = Math.round((COURIERS.a.baseUsed / COURIERS.a.max) * 100);
+      const load1 = Math.round(((COURIERS.a.baseUsed + 12) / COURIERS.a.max) * 100);
+      const co0 = 2.52, co1 = 1.82;
+      const c0 = 45000 / 12, c1 = 68600 / 24;
+
+      const statusText = collab
+        ? 'Kolaborasi Aktif (Disetujui)'
+        : v.decision === 'rejected'
+          ? 'Ditolak Vendor (Rute Langsung)'
+          : 'Diblokir Syarat Ambang / Detour';
+
+      $('v-st-badge').textContent = statusText;
+      $('v-st-badge').className = 'text-xs sm:text-sm font-bold px-3.5 py-1 rounded-full ' + (collab ? 'bg-[#153d32] text-white' : 'bg-amber-200 text-amber-900');
+      $('v-rq-val').textContent = statusText;
+
+      $('v-m-load').textContent = `${load0}% → ${load1}%`;
+      $('v-m-load2').textContent = `Saat ini: ${load}% (${used}/${COURIERS.a.max} paket)`;
+      $('v-m-vmt').textContent = '36 → 26 km (Gabungan)';
+      $('v-m-vmt2').textContent = `Saat ini: ${collab ? '26 km gabungan (Kurir A 20 km + Kurir B 6 km)' : '36 km mandiri (18 km + 18 km)'}`;
+      $('v-m-co2').textContent = `${fmt(co0, 2)} → ${fmt(co1, 2)} kg`;
+      $('v-m-co22').textContent = `Saat ini: ${fmt(collab ? co1 : co0, 2)} kg CO₂`;
+      $('v-m-cost').textContent = `${rp(c0)} → ${rp(c1)}`;
+      $('v-m-cost2').textContent = `Saat ini: ${rp(collab ? c1 : c0)} per paket`;
+
+      // Fleet
+      $('v-a-d').textContent = `${used} dari ${COURIERS.a.max} paket · ${load}% terpakai`;
+      $('v-a-f').style.width = `${load}%`;
+      $('v-a-pb').setAttribute('aria-valuenow', String(load));
+      $('v-a-r').textContent = `V_rem = V_max − V_used = ${COURIERS.a.max} − ${used} = ${COURIERS.a.max - used} paket tersisa`;
+
+      // Controls
+      $('v-sharing').checked = v.sharing;
+      $('v-area').checked = v.area;
+      $('v-volume').checked = v.volume;
+      $('v-weight').checked = v.weight;
+      if (document.activeElement !== $('v-threshold')) $('v-threshold').value = v.threshold;
+      if (document.activeElement !== $('v-detour')) $('v-detour').value = v.detour;
+      $('v-th-o').textContent = `δ = ${fmt(v.threshold, 2)}`;
+
+      $('v-ok-btn').disabled = !!blocker;
+      $('v-why').hidden = !blocker;
+      $('v-why').textContent = blocker;
+
+      // Report Table
+      $('v-tb').innerHTML = `
+        <tr><th class="py-2 px-2">VMT Gabungan (2 Vendor)</th><td class="py-2 px-2">36 km (18 + 18 km)</td><td class="py-2 px-2 font-bold text-[#287044]">26 km (20 + 6 km)</td></tr>
+        <tr><th class="py-2 px-2">Jarak Rute Kurir A</th><td class="py-2 px-2">18 km</td><td class="py-2 px-2 font-bold text-[#287044]">20 km (+2 km via Hub)</td></tr>
+        <tr><th class="py-2 px-2">Emisi CO₂ Gabungan</th><td class="py-2 px-2">${fmt(co0, 2)} kg</td><td class="py-2 px-2 font-bold text-[#287044]">${fmt(co1, 2)} kg (Hemat 0,70 kg)</td></tr>
+        <tr><th class="py-2 px-2">Load Factor Kurir A</th><td class="py-2 px-2">${load0}%</td><td class="py-2 px-2 font-bold text-[#287044]">${load1}%</td></tr>
+        <tr><th class="py-2 px-2">Biaya per Paket</th><td class="py-2 px-2">${rp(c0)}</td><td class="py-2 px-2 font-bold text-[#287044]">${rp(c1)}</td></tr>
+      `;
+
+      const tStr = collab && v.decidedAt ? wib(v.decidedAt) : 'Belum disetujui';
+      $('v-h1').textContent = `1. Kilat Raya (Kurir B) → Hub Merjosari: ${collab ? '✓ Disetujui (' + tStr + ')' : 'Menunggu persetujuan'}`;
+      $('v-h2').textContent = `2. Hub Merjosari → Eco Hemat (Kurir A): ${state.verified ? '✓ OTP Terverifikasi' : collab ? 'Menunggu verifikasi OTP Kurir' : 'Nonaktif'}`;
+      $('v-h-otp').textContent = state.logs.length ? `Log OTP Terakhir: ${state.logs[state.logs.length - 1]}` : `Kode OTP Sesi Aktif: ${state.otp}`;
+
+      $('v-hist').innerHTML = v.history.length
+        ? v.history.slice().reverse().map(h => `<li>${wib(h.at)} — Kolaborasi <strong>${h.d === 'approved' ? 'Disetujui' : 'Ditolak'}</strong></li>`).join('')
+        : '<li>Belum ada riwayat keputusan.</li>';
+
+      $('v-dbst').textContent = dbMode === 'online'
+        ? 'Database Supabase: Tersambung (Cloud + Lokal)'
+        : 'Mode Penyimpanan: Lokal Terpadu (Real-time antar-peran di browser ini)';
+      $('v-sync').textContent = `Sinkronisasi terakhir: ${wib(v.syncAt)}`;
+
+      const names = { area: 'Area tujuan (Kecamatan)', volume: 'Volume paket', weight: 'Bobot paket' };
+      $('v-enc').innerHTML = ['area', 'volume', 'weight'].map(k =>
+        `<li>${v[k] ? '🔒 <strong>' + names[k] + '</strong> · Dibagikan (Terenkripsi)' : '⚪ ' + names[k] + ' · Tidak dibagikan'}</li>`
+      ).join('') + '<li class="text-[#5e7268]">🛡️ <strong>Nama &amp; Kontak Penerima</strong> · Selalu dirahasiakan (Privasi)</li>';
+    }
+
+    // Build QR code pattern
+    function makeQr() {
+      const grid = $('k-qr-art');
+      if (!grid) return;
+      grid.innerHTML = '';
+      for (let y = 0; y < 9; y++) {
+        for (let x = 0; x < 9; x++) {
+          const cell = document.createElement('span');
+          cell.className = 'qr-cell';
+          const finder = (ox, oy) => {
+            const dx = x - ox, dy = y - oy;
+            return dx >= 0 && dx < 3 && dy >= 0 && dy < 3 && (dx === 0 || dy === 0 || dx === 2 || dy === 2 || (dx === 1 && dy === 1));
+          };
+          if (finder(0, 0) || finder(6, 0) || finder(0, 6) || ((x * 7 + y * 11 + x * y) % 5 < 2)) {
+            cell.classList.add('dark');
+          }
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    function stopSim() {
+      if (simTimer) clearInterval(simTimer);
+      simTimer = null;
+      state.running = false;
+    }
+
+    function syncShipmentStageWithProgress() {
+      const activeShip = getActiveShipment();
+      if (activeShip) {
+        activeShip.stage = Math.min(5, Math.floor(state.progress / 20));
+      }
+    }
+
+    // Wire Event Listeners
+    document.querySelectorAll('[data-role]').forEach(btn => {
+      btn.addEventListener('click', () => switchRole(btn.dataset.role));
+    });
+
+    document.querySelectorAll('[data-k-tab]').forEach(btn => {
+      btn.addEventListener('click', () => switchKurirTab(btn.dataset.kTab));
+    });
+    document.querySelectorAll('[data-p-tab]').forEach(btn => {
+      btn.addEventListener('click', () => switchPengirimTab(btn.dataset.pTab));
+    });
+    document.querySelectorAll('[data-v-tab]').forEach(btn => {
+      btn.addEventListener('click', () => switchVendorTab(btn.dataset.vTab));
+    });
+
+    // Kurir controls
+    $('k-courier-a').addEventListener('click', () => { state.courier = 'a'; renderAll(); saveState(); });
+    $('k-courier-b').addEventListener('click', () => { state.courier = 'b'; renderAll(); saveState(); });
+    $('k-go-vendor-collab').addEventListener('click', () => {
+      switchRole('vendor');
+      switchVendorTab('collab');
+    });
+    $('k-hub-to-verify').addEventListener('click', () => switchKurirTab('verify'));
+
+    $('k-toggle-separate').addEventListener('change', e => {
+      if (!dashMap || !separateLayers) return;
+      if (e.target.checked) separateLayers.addTo(dashMap);
+      else dashMap.removeLayer(separateLayers);
+    });
+    $('k-toggle-shared').addEventListener('change', e => {
+      if (!dashMap || !sharedLayer) return;
+      if (e.target.checked) sharedLayer.addTo(dashMap);
+      else dashMap.removeLayer(sharedLayer);
+    });
+
+    ['k-alpha', 'k-beta'].forEach(id => {
+      $(id).addEventListener('input', () => {
+        state.alpha = Number($('k-alpha').value);
+        state.beta = Number($('k-beta').value);
+        renderAll();
+        saveState();
+      });
+    });
+
+    $('k-sim-btn').addEventListener('click', () => {
+      if (state.running) {
+        stopSim();
+        renderAll();
+        saveState(true);
+        return;
+      }
+      if (state.progress >= 100) state.progress = 0;
+      state.running = true;
+      renderAll();
+      simTimer = setInterval(() => {
+        state.progress = Math.min(100, state.progress + 2);
+        syncShipmentStageWithProgress();
+        if (state.progress >= 100) {
+          stopSim();
+          saveState(true);
+          showToast('Simulasi perjalanan kurir selesai (100%)!');
+        }
+        renderAll();
+      }, 150);
+    });
+
+    $('k-sim-step-btn').addEventListener('click', () => {
+      stopSim();
+      state.progress = state.progress >= 100 ? 0 : Math.min(100, (Math.floor(state.progress / 20) + 1) * 20);
+      syncShipmentStageWithProgress();
+      renderAll();
+      saveState(true);
+    });
+
+    $('k-fill-otp-btn').addEventListener('click', () => {
+      $('k-otp-input').value = state.otp;
+    });
+
+    $('k-otp-form').addEventListener('submit', e => {
+      e.preventDefault();
+      if (state.verified) return;
+      const val = $('k-otp-input').value.trim();
+      const msgEl = $('k-otp-msg');
+      if (val !== state.otp) {
+        msgEl.textContent = '✕ Kode OTP tidak sesuai! Gunakan 4 digit kode aktif (' + state.otp + ').';
+        msgEl.style.color = '#b91c1c';
+        return;
+      }
+      state.verified = true;
+      if (state.progress < 60) {
+        state.progress = 60;
+        syncShipmentStageWithProgress();
+      }
+      const logEntry = `${wib(Date.now())} — 12 paket kolaborasi + resi ${state.selectedShipmentId} diverifikasi dengan OTP ${state.otp}`;
+      state.logs.push(logEntry);
+      msgEl.textContent = '✓ Berhasil! Serah terima muatan di Hub Merjosari telah terverifikasi.';
+      msgEl.style.color = '#287044';
+      showToast('OTP Terverifikasi! Status di Pengirim & Vendor 3PL diperbarui.');
+      renderAll();
+      saveState(true);
+    });
+
+    // Pengirim controls
+    $('p-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const qty = Number($('p-qty').value);
+      const errEl = $('p-form-err');
+      if (!Number.isInteger(qty) || qty < 1 || qty > 30) {
+        errEl.textContent = 'Jumlah paket harus antara 1 hingga 30 paket.';
+        errEl.hidden = false;
+        return;
+      }
+      errEl.hidden = true;
+      const newOtp = randomOtp();
+      const newShip = {
+        id: 'ELX-' + Date.now().toString(36).toUpperCase().slice(-4) + Math.random().toString(36).toUpperCase().slice(2, 4),
+        createdAt: Date.now(),
+        sender: $('p-sender').value.trim() || 'Pengirim Eco-LogiX',
+        city: $('p-city').value.trim() || 'Kota Malang',
+        pickupDistrict: $('p-pd').value,
+        pickupAddress: $('p-pa').value.trim(),
+        destinationDistrict: $('p-dd').value,
+        destinationAddress: $('p-da').value.trim(),
+        packageType: $('p-pt').value,
+        quantity: qty,
+        notes: $('p-notes').value.trim(),
+        mode: document.querySelector('input[name="p-mode"]:checked').value,
+        stage: 0,
+        otp: newOtp
+      };
+      state.shipments.unshift(newShip);
+      state.selectedShipmentId = newShip.id;
+      state.otp = newOtp;
+      state.progress = 0;
+      state.verified = false;
+      saveState(true);
+      showToast(`Pengiriman ${newShip.id} berhasil dibuat & dikirim ke Kurir!`);
+      switchPengirimTab('track');
+    });
+
+    $('p-advance-btn').addEventListener('click', () => {
+      const s = getActiveShipment();
+      if (!s || s.stage >= STAGES.length - 1) return;
+      s.stage++;
+      state.progress = s.stage * 20;
+      if (s.stage >= 4 && !state.verified) {
+        state.verified = true;
+        state.logs.push(`${wib(Date.now())} — Serah terima resi ${s.id} diverifikasi pada tahap Pengantaran`);
+      }
+      renderAll();
+      saveState(true);
+    });
+
+    $('p-jump-kurir-btn').addEventListener('click', () => {
+      switchRole('kurir');
+      switchKurirTab('route');
+    });
+
+    // Vendor 3PL controls
+    ['v-sharing', 'v-area', 'v-volume', 'v-weight'].forEach(id => {
+      $(id).addEventListener('change', e => {
+        const key = id.replace('v-', '');
+        state.vendor[key] = e.target.checked;
+        renderAll();
+        saveState(true);
+      });
+    });
+
+    $('v-threshold').addEventListener('input', e => {
+      state.vendor.threshold = Number(e.target.value);
+      renderAll();
+    });
+    $('v-threshold').addEventListener('change', () => saveState(true));
+
+    $('v-detour').addEventListener('change', e => {
+      state.vendor.detour = Math.max(0, Math.min(20, Number(e.target.value) || 0));
+      renderAll();
+      saveState(true);
+    });
+
+    $('v-ok-btn').addEventListener('click', () => {
+      if (getVendorBlocker()) return renderAll();
+      state.vendor.decision = 'approved';
+      state.vendor.decidedAt = Date.now();
+      state.vendor.history = state.vendor.history.concat({ d: 'approved', at: Date.now() }).slice(-10);
+      showToast('Vendor 3PL menyetujui Load-Sharing! Rute Kurir diperbarui.');
+      renderAll();
+      saveState(true);
+    });
+
+    $('v-no-btn').addEventListener('click', () => {
+      state.vendor.decision = 'rejected';
+      state.vendor.decidedAt = null;
+      state.vendor.history = state.vendor.history.concat({ d: 'rejected', at: Date.now() }).slice(-10);
+      showToast('Vendor 3PL menolak Load-Sharing. Kurir beralih ke Rute Langsung.');
+      renderAll();
+      saveState(true);
+    });
+
+    $('v-sync-btn').addEventListener('click', () => {
+      saveState(true);
+      renderAll();
+      showToast('Data berhasil disinkronkan!');
+    });
+
+    // Modal & Global Buttons
+    function openModal(mode) {
+      $('app-modal').hidden = false;
+      $('modal-body-config').hidden = mode !== 'config';
+      $('modal-body-confirm').hidden = mode !== 'confirm';
+      $('modal-title').textContent = mode === 'config' ? 'Konfigurasi Database Supabase' : 'Konfirmasi Reset Data';
+    }
+    function closeModal() {
+      $('app-modal').hidden = true;
+    }
+
+    $('btn-open-config').addEventListener('click', () => openModal('config'));
+    $('v-config-btn2').addEventListener('click', () => openModal('config'));
+    $('modal-close').addEventListener('click', closeModal);
+    $('confirm-cancel-btn').addEventListener('click', closeModal);
+
+    $('btn-global-reset').addEventListener('click', () => openModal('confirm'));
+    $('confirm-ok-btn').addEventListener('click', () => {
+      stopSim();
+      state = defaultState();
+      saveState(true);
+      renderAll();
+      closeModal();
+      showToast('Seluruh data simulasi telah direset ke awal.');
+    });
+
+    $('btn-share-session').addEventListener('click', async () => {
+      const url = window.location.href;
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast('Tautan aplikasi berhasil disalin ke clipboard!');
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (err) {}
+        document.body.removeChild(ta);
+        showToast('Tautan aplikasi siap dibagikan: ' + url);
+      }
+    });
+
+    // Supabase connection handler
+    async function connectSupabase(url, key) {
+      if (!url || !key || !window.supabase) {
+        sbClient = null;
+        setConnStatus('local', 'Mode Sinkronisasi Terpadu (Lokal Browser)');
+        return;
+      }
+      try {
+        sbClient = window.supabase.createClient(url.trim(), key.trim());
+        const { data, error } = await sbClient.from('vendor_state').select('data').eq('id', 'eco-hemat').maybeSingle();
+        if (error) throw error;
+        if (data && data.data && data.data.vendor) {
+          state = { ...state, ...data.data, running: false };
+          renderAll();
+        }
+        sbClient.channel('ecologix-unified')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'vendor_state', filter: 'id=eq.eco-hemat' }, payload => {
+            if (payload.new && payload.new.data && payload.new.data.vendor) {
+              state = { ...state, ...payload.new.data, running: false };
+              renderAll();
+            }
+          })
+          .subscribe();
+        setConnStatus('online', 'Tersambung ke Supabase Cloud (Real-time Aktif)');
+        showToast('Berhasil terhubung ke database Supabase!');
+      } catch (e) {
+        sbClient = null;
+        setConnStatus('error', 'Gagal terhubung ke Supabase · Beralih ke Mode Lokal Terpadu');
+      }
+    }
+
+    $('cfg-save-btn').addEventListener('click', () => {
+      const url = $('cfg-url').value.trim();
+      const key = $('cfg-key').value.trim();
+      try { localStorage.setItem(CFG_KEY, JSON.stringify({ url, key })); } catch (e) {}
+      closeModal();
+      connectSupabase(url, key);
+    });
+
+    $('cfg-clear-btn').addEventListener('click', () => {
+      $('cfg-url').value = '';
+      $('cfg-key').value = '';
+      try { localStorage.removeItem(CFG_KEY); } catch (e) {}
+      closeModal();
+      connectSupabase('', '');
+      showToast('Beralih ke Mode Lokal Terpadu.');
+    });
+
+    // Auth & RBAC Account Handlers
+    let authMode = 'login';
+    function setAuthTab(mode) {
+      authMode = mode;
+      $('auth-tab-login').classList.toggle('active', mode === 'login');
+      $('auth-tab-register').classList.toggle('active', mode === 'register');
+      $('auth-register-fields').hidden = mode !== 'register';
+      $('auth-submit-btn').textContent = mode === 'login' ? 'Masuk ke Akun' : 'Daftar & Masuk';
+      $('auth-msg').textContent = '';
+    }
+
+    $('btn-open-auth').addEventListener('click', () => {
+      $('auth-modal').hidden = false;
+      setAuthTab('login');
+    });
+    $('auth-modal-close').addEventListener('click', () => {
+      $('auth-modal').hidden = true;
+    });
+    $('auth-tab-login').addEventListener('click', () => setAuthTab('login'));
+    $('auth-tab-register').addEventListener('click', () => setAuthTab('register'));
+
+    $('rbac-strict-toggle').addEventListener('change', e => {
+      state.strictRbac = e.target.checked;
+      if (state.strictRbac && state.currentUser) {
+        switchRole(state.currentUser.role, true);
+      }
+      renderAll();
+      saveState();
+    });
+
+    function loginWithAccount(acc) {
+      state.currentUser = acc;
+      if (acc.courierCode) {
+        state.courier = acc.courierCode;
+      }
+      if (acc.role === 'pengirim' && acc.name) {
+        $('p-sender').value = acc.name;
+      }
+      switchRole(acc.role, true);
+      $('auth-modal').hidden = true;
+      showToast(`Berhasil masuk sebagai ${acc.name} (${acc.badge})!`);
+      renderAll();
+      saveState();
+    }
+
+    document.querySelectorAll('[data-demo-acc]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.demoAcc;
+        const acc = DEFAULT_ACCOUNTS[key];
+        if (acc) loginWithAccount(acc);
+      });
+    });
+
+    $('auth-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const email = $('auth-email').value.trim().toLowerCase();
+      const pass = $('auth-pass').value;
+      const msgEl = $('auth-msg');
+      const allAccounts = [...Object.values(DEFAULT_ACCOUNTS), ...(state.customAccounts || [])];
+
+      if (authMode === 'login') {
+        const found = allAccounts.find(a => a.email.toLowerCase() === email && a.pass === pass);
+        if (!found) {
+          msgEl.textContent = '✕ Email atau password tidak cocok. Gunakan salah satu akun demo di atas atau daftar akun baru.';
+          msgEl.style.color = '#b91c1c';
+          return;
+        }
+        loginWithAccount(found);
+      } else {
+        const name = $('auth-name').value.trim() || email.split('@')[0];
+        const roleChoice = $('auth-role-select').value;
+        const roleMap = {
+          pengirim: { role: 'pengirim', courierCode: null, badge: 'Pengirim' },
+          kurir_a: { role: 'kurir', courierCode: 'a', badge: 'Kurir A · Eco Hemat' },
+          kurir_b: { role: 'kurir', courierCode: 'b', badge: 'Kurir B · Kilat Raya' },
+          vendor: { role: 'vendor', courierCode: null, badge: 'Admin Vendor 3PL' }
+        };
+        const rm = roleMap[roleChoice] || roleMap.pengirim;
+        const newAcc = {
+          id: 'usr_' + Date.now(),
+          email,
+          pass,
+          name,
+          role: rm.role,
+          courierCode: rm.courierCode,
+          badge: rm.badge
+        };
+        state.customAccounts = (state.customAccounts || []).filter(a => a.email.toLowerCase() !== email).concat(newAcc);
+        if (sbClient) {
+          try {
+            await sbClient.auth.signUp({ email, password: pass, options: { data: { name, role: rm.role, badge: rm.badge } } });
+          } catch (err) {}
+        }
+        loginWithAccount(newAcc);
+      }
+    });
+
+    // Initialize App
+    makeQr();
+    initMaps();
+    switchRole(state.role || 'kurir');
+    try {
+      const savedCfg = JSON.parse(localStorage.getItem(CFG_KEY) || 'null');
+      const extCfg = window.ECOLOGIX_CONFIG || window.APP_CONFIG || {};
+      const url = (savedCfg && savedCfg.url) || extCfg.SUPABASE_URL || '';
+      const key = (savedCfg && savedCfg.key) || extCfg.SUPABASE_ANON_KEY || '';
+      if (url && key && !/ISI_|GANTI/i.test(url + key)) {
+        $('cfg-url').value = url;
+        $('cfg-key').value = key;
+        connectSupabase(url, key);
+      }
+    } catch (e) {}
+  })();
+  </script>
+</body>
+</html>

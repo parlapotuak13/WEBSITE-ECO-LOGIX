@@ -1,0 +1,9 @@
+{
+  "name": "eco-logix-suite",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Eco-LogiX: Platform Terpadu Kurir, Pengirim, dan Vendor 3PL (Green-Routing & Collaborative Load-Sharing)",
+  "scripts": {
+    "start": "npx serve ."
+  }
+}
